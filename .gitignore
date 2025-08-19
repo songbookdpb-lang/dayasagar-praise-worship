@@ -1,0 +1,194 @@
+# ====================
+# KEEP ONLY ESSENTIAL FILES
+# ====================
+
+# Ignore everything by default
+*
+!*/
+
+# ====================
+# ALLOW ESSENTIAL SOURCE FILES
+# ====================
+
+# Flutter/Dart source
+!lib/
+!lib/**/*.dart
+!test/
+!test/**/*.dart
+
+# Project configuration
+!pubspec.yaml
+!analysis_options.yaml
+
+# Essential assets only
+!assets/
+!assets/**/*.png
+!assets/**/*.jpg
+!assets/**/*.json
+!assets/**/*.ttf
+!assets/**/*.svg
+
+# README and documentation
+!README.md
+!*.md
+
+# Git files
+!.gitignore
+!.gitattributes
+
+# ====================
+# ANDROID - ONLY ESSENTIAL CONFIG
+# ====================
+!android/
+!android/app/
+!android/app/build.gradle
+!android/app/build.gradle.kts
+!android/app/src/
+!android/app/src/main/
+!android/app/src/main/AndroidManifest.xml
+!android/app/src/main/kotlin/
+!android/app/src/main/kotlin/**/*.kt
+!android/app/src/main/res/
+!android/app/src/main/res/values/
+!android/app/src/main/res/values/*.xml
+!android/app/src/main/res/drawable*/
+!android/app/src/main/res/drawable*/*.xml
+!android/app/src/main/res/mipmap*/
+!android/app/src/main/res/mipmap*/*.png
+!android/app/src/main/res/mipmap*/*.xml
+!android/build.gradle
+!android/build.gradle.kts
+!android/gradle.properties
+!android/settings.gradle
+!android/settings.gradle.kts
+
+# ====================
+# iOS - ONLY ESSENTIAL CONFIG
+# ====================
+!ios/
+!ios/Runner/
+!ios/Runner/Info.plist
+!ios/Runner/AppDelegate.swift
+!ios/Runner/*.swift
+!ios/Runner.xcodeproj/
+!ios/Runner.xcodeproj/project.pbxproj
+!ios/Runner.xcworkspace/
+!ios/Runner.xcworkspace/contents.xcworkspacedata
+!ios/Flutter/
+!ios/Flutter/Debug.xcconfig
+!ios/Flutter/Release.xcconfig
+
+# ====================
+# WEB - ESSENTIAL ONLY
+# ====================
+!web/
+!web/index.html
+!web/manifest.json
+!web/favicon.png
+!web/icons/
+!web/icons/*.png
+
+# ====================
+# IGNORE ALL BUILD/CACHE/TEMP FILES
+# ====================
+
+# Build directories
+build/
+**/build/
+.dart_tool/
+.pub/
+.pub-cache/
+
+# Cache and temp
+*.tmp
+*.temp
+*.log
+*.cache
+.cache/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Generated
+*.g.dart
+*.freezed.dart
+*.mocks.dart
+*.gr.dart
+*.config.dart
+
+# Dependencies
+node_modules/
+package-lock.json
+.packages
+.flutter-plugins
+.flutter-plugins-dependencies
+pubspec.lock
+
+# Signing
+*.jks
+*.keystore
+key.properties
+*.p12
+*.mobileprovision
+
+# Platform builds
+android/app/build/
+android/app/debug/
+android/app/profile/
+android/app/release/
+android/.gradle/
+android/gradlew
+android/gradlew.bat
+android/gradle/wrapper/gradle-wrapper.jar
+android/local.properties
+
+ios/build/
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/App.framework
+ios/Flutter/Flutter.framework
+ios/Flutter/Generated.xcconfig
+ios/Flutter/flutter_export_environment.sh
+
+linux/build/
+macos/build/
+windows/build/
+
+# Firebase (if you want to exclude)
+google-services.json
+GoogleService-Info.plist
+firebase.json
+.firebaserc
+.firebase/
+
+# Coverage
+coverage/
+lcov.info
+
+# APK/IPA outputs
+*.apk
+*.aab
+*.ipa
+
+# Native symbols
+native-debug-symbols.zip
+*.dSYM/
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/
+fastlane/test_output/
+
+# Metadata
+.metadata
+.flutter
