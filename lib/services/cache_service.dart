@@ -7,10 +7,7 @@ class CacheService {
   static const String songsBoxName = 'songsCacheBox';
   static const String syncBoxName = 'syncTimestampBox';
 
-  // ✅ ADDED: Missing initialize method
   Future<void> initialize() async {
-    // Initialize Hive if not already initialized
-    // This method can be empty since Hive boxes are opened on demand
   }
 
   Future<Box> _openSongsBox() async {
@@ -27,11 +24,6 @@ class CacheService {
     return Hive.box(syncBoxName);
   }
 
-  // ============================================================================
-  // SONG CACHING METHODS (STORED FOREVER FOR OFFLINE ACCESS)
-  // ============================================================================
-
-  /// ✅ Get cached songs by key (stored forever locally)
   Future<List<Song>> getPagedSongsCache(String key) async {
     final box = await _openSongsBox();
     final jsonString = box.get(key);
@@ -40,7 +32,6 @@ class CacheService {
 
     try {
       final List<dynamic> rawList = jsonDecode(jsonString);
-      // ✅ FIXED: Use single parameter Song.fromMap
       return rawList
           .map((json) => Song.fromMap(Map<String, dynamic>.from(json)))
           .toList();
@@ -49,53 +40,42 @@ class CacheService {
     }
   }
 
-  /// ✅ Cache songs by key (stored forever locally)
   Future<void> setPagedSongsCache(String key, List<Song> songs) async {
     final box = await _openSongsBox();
     final jsonList = songs.map((s) => s.toMap()).toList();
     await box.put(key, jsonEncode(jsonList));
   }
 
-  /// ✅ NEW: Cache songs by language (for organized storage)
   Future<void> cacheSongsByLanguage(String language, List<Song> songs) async {
     final key = 'songs_$language';
     await setPagedSongsCache(key, songs);
   }
 
-  /// ✅ NEW: Get cached songs by language
   Future<List<Song>> getCachedSongsByLanguage(String language) async {
     final key = 'songs_$language';
     return await getPagedSongsCache(key);
   }
 
-  /// ✅ NEW: Merge new songs with existing cached songs (for incremental sync)
   Future<void> mergeSongsToCache(String key, List<Song> newSongs) async {
-    // Get existing cached songs
     final existingSongs = await getPagedSongsCache(key);
     final Map<String, Song> songMap = {
       for (var song in existingSongs) song.id: song
     };
     
-    // Merge new songs (overwrite existing ones with same ID)
     for (var newSong in newSongs) {
       songMap[newSong.id] = newSong;
     }
     
-    // Cache merged results
     final mergedSongs = songMap.values.toList();
     await setPagedSongsCache(key, mergedSongs);
   }
-
-  /// ✅ NEW: Search cached songs offline (works without internet)
   Future<List<Song>> searchCachedSongs(String query, {String? language}) async {
     try {
       List<Song> allSongs = [];
       
       if (language != null) {
-        // Search in specific language cache
         allSongs = await getCachedSongsByLanguage(language);
       } else {
-        // Search across all cached languages
         final languages = await getCachedLanguages();
         for (final lang in languages) {
           final songs = await getCachedSongsByLanguage(lang);
@@ -103,7 +83,6 @@ class CacheService {
         }
       }
       
-      // Filter by query and exclude deleted songs
       final queryLower = query.toLowerCase();
       return allSongs.where((song) => 
         !song.isDeleted &&
@@ -116,7 +95,6 @@ class CacheService {
     }
   }
 
-  /// ✅ NEW: Get list of cached languages
   Future<List<String>> getCachedLanguages() async {
     try {
       final box = await _openSongsBox();
@@ -137,7 +115,6 @@ class CacheService {
     }
   }
 
-  /// ✅ NEW: Get all cached songs (across all languages)
   Future<List<Song>> getAllCachedSongs() async {
     final languages = await getCachedLanguages();
     final allSongs = <Song>[];
@@ -150,17 +127,11 @@ class CacheService {
     return allSongs;
   }
 
-  // ============================================================================
-  // SYNC TIMESTAMP MANAGEMENT (FOR INCREMENTAL SYNC)
-  // ============================================================================
-
-  /// ✅ UPDATED: Store last sync timestamp as int for incremental sync compatibility
   Future<void> saveLastSyncTimestamp(String collection, int timestamp) async {
     final box = await _openSyncBox();
     await box.put('last_sync_$collection', timestamp);
   }
 
-  /// ✅ UPDATED: Get last sync timestamp as int for incremental sync compatibility
   Future<int?> getLastSyncTimestamp(String collection) async {
     final box = await _openSyncBox();
     final timestamp = box.get('last_sync_$collection');
@@ -172,12 +143,9 @@ class CacheService {
     return null;
   }
 
-  /// ✅ KEPT: Original DateTime version for backward compatibility
   Future<void> setLastSyncTimestamp(String collection, DateTime timestamp) async {
     await saveLastSyncTimestamp(collection, timestamp.millisecondsSinceEpoch);
   }
-
-  /// ✅ ADDED: Get DateTime version for backward compatibility
   Future<DateTime?> getLastSyncTimestampAsDateTime(String collection) async {
     final timestamp = await getLastSyncTimestamp(collection);
     if (timestamp != null) {
@@ -186,23 +154,16 @@ class CacheService {
     return null;
   }
 
-  /// ✅ NEW: Clear sync timestamp
   Future<void> clearSyncTimestamp(String collection) async {
     final box = await _openSyncBox();
     await box.delete('last_sync_$collection');
   }
 
-  // ============================================================================
-  // CACHE MANAGEMENT & STATISTICS
-  // ============================================================================
 
-  /// Clear all song caches (but keep them forever by default)
   Future<void> clearAllCache() async {
     if (Hive.isBoxOpen(songsBoxName)) await Hive.box(songsBoxName).clear();
     if (Hive.isBoxOpen(syncBoxName)) await Hive.box(syncBoxName).clear();
   }
-
-  /// ✅ UPDATED: Get cache statistics (songs only)
   Future<Map<String, int>> getCacheStats() async {
     final Map<String, int> stats = {
       'songs': 0,
@@ -223,14 +184,11 @@ class CacheService {
 
     return stats;
   }
-
-  /// ✅ NEW: Get total number of cached songs across all languages
   Future<int> getTotalCachedSongsCount() async {
     final allSongs = await getAllCachedSongs();
     return allSongs.where((song) => !song.isDeleted).length;
   }
 
-  /// ✅ NEW: Get cache size information
   Future<Map<String, dynamic>> getCacheInfo() async {
     final stats = await getCacheStats();
     final totalSongs = await getTotalCachedSongsCount();
@@ -246,24 +204,16 @@ class CacheService {
     };
   }
 
-  // ============================================================================
-  // ADDITIONAL UTILITY METHODS
-  // ============================================================================
-
-  /// ✅ ADDED: Delete specific language cache
   Future<void> clearLanguageCache(String language) async {
     final key = 'songs_$language';
     final box = await _openSongsBox();
     await box.delete(key);
   }
 
-  /// ✅ ADDED: Check if language is cached
   Future<bool> isLanguageCached(String language) async {
     final languages = await getCachedLanguages();
     return languages.contains(language);
   }
-
-  /// ✅ ADDED: Get cache size in bytes (approximate)
   Future<int> getCacheSizeBytes() async {
     try {
       final box = await _openSongsBox();
@@ -272,7 +222,7 @@ class CacheService {
       for (final key in box.keys) {
         final value = box.get(key);
         if (value is String) {
-          totalSize += value.length * 2; // Approximate UTF-16 encoding
+          totalSize += value.length * 2; 
         }
       }
       
@@ -283,7 +233,6 @@ class CacheService {
     }
   }
 
-  /// ✅ ADDED: Get cache size in MB
   Future<double> getCacheSizeMB() async {
     final sizeBytes = await getCacheSizeBytes();
     return sizeBytes / (1024 * 1024);

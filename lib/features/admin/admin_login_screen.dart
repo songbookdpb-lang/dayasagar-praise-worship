@@ -34,7 +34,6 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
     super.dispose();
   }
 
-  // Email validation
   String? _validateEmail(String? value) {
     if (value == null || value.isEmpty) {
       return 'Email is required';
@@ -48,8 +47,6 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
     
     return null;
   }
-
-  // Password validation
   String? _validatePassword(String? value) {
     if (value == null || value.isEmpty) {
       return 'Password is required';
@@ -130,9 +127,7 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
     HapticFeedback.heavyImpact();
   }
 
-  // Forgot password function
   Future<void> _forgotPassword() async {
-    // Validate email first
     if (_emailController.text.isEmpty) {
       _showSnackbar('Please enter your email address first', SnackBarType.warning);
       _emailFocusNode.requestFocus();
@@ -168,7 +163,6 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
     }
   }
 
-  // Handle password reset errors
   void _handleResetPasswordError(dynamic error) {
     String errorMessage = 'Failed to send reset email. Please try again.';
     
@@ -185,7 +179,6 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
     _showSnackbar(errorMessage, SnackBarType.error);
   }
 
-  // Show reset password success dialog
   void _showResetPasswordDialog() {
     showDialog(
       context: context,
@@ -240,8 +233,6 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
       },
     );
   }
-
-  // Enhanced snackbar with different types
   void _showSnackbar(String message, SnackBarType type) {
     Color backgroundColor;
     IconData icon;
@@ -297,7 +288,6 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
     );
   }
 
-  // Quick fill demo credentials (remove in production)
   void _fillDemoCredentials() {
     _emailController.text = 'admin@example.com';
     _passwordController.text = 'admin123';
@@ -314,7 +304,6 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
     final screenSize = MediaQuery.of(context).size;
     
     return Scaffold(
-      // Full screen AppBar with transparent background
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -334,8 +323,7 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
           },
         ),
         actions: [
-          // Demo credentials button (remove in production)
-          if (true) // Set to false in production
+          if (true) 
             IconButton(
               icon: Icon(
                 Icons.science,
@@ -375,10 +363,7 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                 key: _formKey,
                 child: Column(
                   children: [
-                    // Top spacing
                     SizedBox(height: screenSize.height * 0.05),
-                    
-                    // Admin Login Header
                     Column(
                       children: [
                         Hero(
@@ -426,8 +411,6 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                     ),
 
                     SizedBox(height: screenSize.height * 0.06),
-
-                    // Login Form
                     Container(
                       padding: const EdgeInsets.all(32),
                       decoration: BoxDecoration(
@@ -448,7 +431,6 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          // Email Field
                           TextFormField(
                             controller: _emailController,
                             focusNode: _emailFocusNode,
@@ -522,7 +504,6 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                           
                           const SizedBox(height: 20),
                           
-                          // Password Field
                           TextFormField(
                             controller: _passwordController,
                             focusNode: _passwordFocusNode,
@@ -608,7 +589,6 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                           
                           const SizedBox(height: 16),
                           
-                          // Forgot Password Link
                           Align(
                             alignment: Alignment.centerRight,
                             child: TextButton(
@@ -634,8 +614,6 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                           ),
                           
                           const SizedBox(height: 16),
-                          
-                          // Login Button
                           SizedBox(
                             height: 56,
                             child: ElevatedButton(
@@ -686,10 +664,8 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                       ),
                     ),
                     
-                    // Bottom spacing
                     SizedBox(height: screenSize.height * 0.05),
                     
-                    // Security Notice
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(

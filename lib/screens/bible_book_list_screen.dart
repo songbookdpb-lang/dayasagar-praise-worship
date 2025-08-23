@@ -22,8 +22,6 @@ final List<String> newTestamentBooksOrdered = [
   '2 Timothy','Titus','Philemon','Hebrews','James','1 Peter','2 Peter',
   '1 John','2 John','3 John','Jude','Revelation'
 ];
-
-// Hindi translations for Bible books
 final Map<String, String> hindiBookNames = {
   'Genesis': 'उत्पत्ति',
   'Exodus': 'निर्गमन',
@@ -93,7 +91,6 @@ final Map<String, String> hindiBookNames = {
   'Revelation': 'प्रकाशितवाक्य',
 };
 
-// Odia translations for Bible books
 final Map<String, String> odiaBookNames = {
   'Genesis': 'ଆଦିପୁସ୍ତକ',
   'Exodus': 'ନିର୍ଗମନ',
@@ -163,19 +160,15 @@ final Map<String, String> odiaBookNames = {
   'Revelation': 'ପ୍ରକାଶିତ',
 };
 
-// ✅ NEW: Hindi Testament Names
 final Map<String, String> hindiTestamentNames = {
   'Old Testament': 'पुराना नियम',
   'New Testament': 'नया नियम',
 };
 
-// ✅ NEW: Odia Testament Names
 final Map<String, String> odiaTestamentNames = {
   'Old Testament': 'ପୁରାତନ ନିୟମ',
   'New Testament': 'ନୂତନ ନିୟମ',
 };
-
-// Helper functions for language detection
 bool _isEnglishLocal(String language) {
   final lang = language.trim().toLowerCase();
   return lang == 'english' || lang == 'en-english';
@@ -196,36 +189,32 @@ bool _isLocal(String language) =>
     _isHindiLocal(language) ||
     _isOdiaLocal(language);
 
-// ✅ NEW: Get Localized Book Name (ONLY language-specific name)
 String _getLocalizedBookName(String bookName, String language) {
   if (_isHindiLocal(language)) {
     return hindiBookNames[bookName] ?? bookName;
   } else if (_isOdiaLocal(language)) {
     return odiaBookNames[bookName] ?? bookName;
   } else {
-    return bookName; // English
+    return bookName;
   }
 }
 
-// ✅ NEW: Get Localized Testament Name
 String _getLocalizedTestamentName(String testamentName, String language) {
   if (_isHindiLocal(language)) {
     return hindiTestamentNames[testamentName] ?? testamentName;
   } else if (_isOdiaLocal(language)) {
     return odiaTestamentNames[testamentName] ?? testamentName;
   } else {
-    return testamentName; // English
+    return testamentName;
   }
 }
-
-// ✅ FIXED: Load books from bundled JSON - FULLY OFFLINE
 Future<List<String>> _loadBooksFromBundledJson(String language) async {
   try {
     final code = _isEnglishLocal(language)
         ? 'EN-English'
         : _isHindiLocal(language)
             ? 'HI-Hindi'
-            : 'OD-Odia'; // ✅ FIXED: OD-Odia
+            : 'OD-Odia'; 
 
     debugPrint('📚 Loading $language books from $code/asv.json...');
     
@@ -255,7 +244,7 @@ class _BibleBookListScreenState extends ConsumerState<BibleBookListScreen> {
   final _searchFocusNode = FocusNode();
   final _scrollController = ScrollController();
   final _pageController = PageController();
-  int _activeTestament = 0; // 0 = Old, 1 = New
+  int _activeTestament = 0;
   List<String> _localBooks = [];
   bool _isLoadingLocal = false;
 
@@ -276,7 +265,6 @@ class _BibleBookListScreenState extends ConsumerState<BibleBookListScreen> {
     super.dispose();
   }
 
-  // ✅ FIXED: Fully offline data loading (removed BibleJsonService)
   Future<void> _loadBooksData() async {
     setState(() => _isLoadingLocal = true);
     try {
@@ -295,11 +283,10 @@ class _BibleBookListScreenState extends ConsumerState<BibleBookListScreen> {
 
   void _onSearchChanged() {
     if (!mounted) return;
-    setState(() {}); // Trigger rebuild for local search
+    setState(() {}); 
   }
 
   void _onScroll() {
-    // No server calls - pure offline
   }
 
   void _toggleSearch() {
@@ -339,7 +326,6 @@ class _BibleBookListScreenState extends ConsumerState<BibleBookListScreen> {
     }
   }
 
-  // ✅ FIXED: Removed BibleJsonService.forceRefresh()
   Future<void> _handleRefresh() async {
     HapticFeedback.lightImpact();
     await _loadBooksData();
@@ -400,7 +386,7 @@ class _BibleBookListScreenState extends ConsumerState<BibleBookListScreen> {
       items: _localBooks,
       isLoading: _isLoadingLocal,
       hasMore: false,
-      isFromCache: true, // Always from cache
+      isFromCache: true,
       error: null,
     );
 
@@ -414,7 +400,6 @@ class _BibleBookListScreenState extends ConsumerState<BibleBookListScreen> {
         appBar: _buildAppBar(theme, isDark),
         body: Stack(
           children: [
-            // Same gradient background
             Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -434,7 +419,6 @@ class _BibleBookListScreenState extends ConsumerState<BibleBookListScreen> {
                 ),
               ),
             ),
-            // Same background cross image
             Positioned.fill(
               child: Opacity(
                 opacity: isDark ? 0.12 : 0.06,
@@ -497,7 +481,6 @@ class _BibleBookListScreenState extends ConsumerState<BibleBookListScreen> {
   }
 
   Widget _buildSearchBar(ThemeData theme, bool isDark) {
-    // ✅ LOCALIZED: Search hint text
     String searchHint;
     if (_isHindiLocal(widget.language)) {
       searchHint = 'किताबें खोजें...';
@@ -690,9 +673,7 @@ class _BibleBookListScreenState extends ConsumerState<BibleBookListScreen> {
       controller: _pageController,
       onPageChanged: _onPageChanged,
       children: [
-        // Old Testament Page
         _buildTestamentBooksList(bookSet, 0, theme, isDark),
-        // New Testament Page
         _buildTestamentBooksList(bookSet, 1, theme, isDark),
       ],
     );
@@ -702,7 +683,6 @@ class _BibleBookListScreenState extends ConsumerState<BibleBookListScreen> {
     final books = _filteredBooksForTestament(bookSet, testament);
 
     if (books.isEmpty) {
-      // ✅ LOCALIZED: Empty state messages
       String noBookMessage;
       String swipeMessage;
       if (_isHindiLocal(widget.language)) {
@@ -793,17 +773,14 @@ class _BibleBookListScreenState extends ConsumerState<BibleBookListScreen> {
       ),
     );
   }
-
-  // ✅ UPDATED: Book button shows ONLY localized text
   Widget _buildBookButton(String bookName, ThemeData theme, bool isDark) {
-    // Get the appropriate name based on language
     String displayName;
     if (_isHindiLocal(widget.language)) {
-      displayName = hindiBookNames[bookName] ?? bookName; // Hindi only
+      displayName = hindiBookNames[bookName] ?? bookName; 
     } else if (_isOdiaLocal(widget.language)) {
-      displayName = odiaBookNames[bookName] ?? bookName; // Odia only
+      displayName = odiaBookNames[bookName] ?? bookName; 
     } else {
-      displayName = bookName; // English only
+      displayName = bookName; 
     }
 
     return Container(
@@ -829,7 +806,7 @@ class _BibleBookListScreenState extends ConsumerState<BibleBookListScreen> {
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
             child: Text(
-              displayName, // ✅ ONLY language-specific name shown
+              displayName, 
               textAlign: TextAlign.center,
               style: GoogleFonts.inter(
                 fontSize: 16,
@@ -854,7 +831,6 @@ class _BibleBookListScreenState extends ConsumerState<BibleBookListScreen> {
   }
 
   Widget _buildSearchEmptyState(ThemeData theme, bool isDark) {
-    // ✅ LOCALIZED: Search prompt
     String searchPrompt;
     if (_isHindiLocal(widget.language)) {
       searchPrompt = 'बाइबल की किताबें खोजें';
@@ -889,7 +865,6 @@ class _BibleBookListScreenState extends ConsumerState<BibleBookListScreen> {
   }
 
   Widget _buildSearchNoResultsState(ThemeData theme, bool isDark) {
-    // ✅ LOCALIZED: No results message
     String noResultsMessage;
     if (_isHindiLocal(widget.language)) {
       noResultsMessage = 'कोई किताब नहीं मिली';
@@ -924,7 +899,6 @@ class _BibleBookListScreenState extends ConsumerState<BibleBookListScreen> {
   }
 
   Widget _buildLoadingState(ThemeData theme, bool isDark) {
-    // ✅ LOCALIZED: Loading message
     String loadingMessage;
     if (_isHindiLocal(widget.language)) {
       loadingMessage = 'किताबें लोड हो रही हैं...';
@@ -955,7 +929,6 @@ class _BibleBookListScreenState extends ConsumerState<BibleBookListScreen> {
   }
 
   Widget _buildEmptyState(ThemeData theme, bool isDark) {
-    // ✅ LOCALIZED: Empty state and reload button
     String emptyMessage;
     String reloadText;
     if (_isHindiLocal(widget.language)) {
@@ -1002,7 +975,6 @@ class _BibleBookListScreenState extends ConsumerState<BibleBookListScreen> {
   }
 
   Widget _buildErrorState(String error, ThemeData theme, bool isDark) {
-    // ✅ LOCALIZED: Error messages and buttons
     String errorTitle;
     String retryText;
     String goBackText;

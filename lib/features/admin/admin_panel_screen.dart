@@ -190,7 +190,6 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen>
         _scheduleTextController.clear();
       });
       
-      // ✅ ADDED: Invalidate schedule providers for immediate update
       ref.invalidate(adminSchedulesProvider);
       
       _showSnackbar('Schedule Saved Successfully!', isError: false);
@@ -216,16 +215,13 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen>
     );
   }
 
-  // ✅ NEW: Songs refresh handler with dynamic updates
   Future<void> _handleSongsRefresh() async {
     try {
       _showSnackbar('Refreshing songs...', isError: false);
       
-      // Perform incremental sync to get latest data
       final syncService = ref.read(inc.incrementalSyncServiceProvider);
       await syncService.performIncrementalSync();
       
-      // ✅ CRITICAL: Invalidate providers to trigger UI refresh
       ref.invalidate(adminSongsProvider);
       ref.invalidate(adminSyncStatusProvider);
       
@@ -235,29 +231,28 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen>
     }
   }
 
-  // ✅ NEW: Proper delete with sync and refresh for dynamic updates
   Future<void> _performDelete(String type, dynamic item) async {
     try {
       _showSnackbar('Deleting $type...', isError: false);
 
       final firestore = ref.read(firestoreServiceProvider);
+      final syncService = ref.read(inc.incrementalSyncServiceProvider);
       
-      // Perform the delete operation
       if (type == 'song') {
         await firestore.deleteSong(item.id);
+        
+        final updatedSong = item.copyWith(
+          isDeleted: true,
+          changeType: 'deleted',
+          updatedAt: Timestamp.now(),
+        );
+        await syncService.markSongAsDeletedInCache(item.id, item.language);
       }
 
-      // ✅ CRITICAL: Trigger incremental sync immediately after deletion
-      final syncService = ref.read(inc.incrementalSyncServiceProvider);
-      await syncService.performIncrementalSync();
+      ref.invalidate(adminSongsProvider);
+      ref.invalidate(adminSyncStatusProvider);
 
-      // ✅ CRITICAL: Invalidate providers to refresh UI dynamically
-      if (type == 'song') {
-        ref.invalidate(adminSongsProvider);
-        ref.invalidate(adminSyncStatusProvider);
-      }
-
-      _showSnackbar('$type deleted and synced successfully!', isError: false);
+      _showSnackbar('$type deleted successfully!', isError: false);
     } catch (e) {
       _showSnackbar('Failed to delete $type: $e');
     }
@@ -269,7 +264,7 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen>
       builder: (dContext) => AlertDialog(
         title: Text('Delete $type?'),
         content: Text(
-          'Are you sure you want to delete "${item is Song ? item.songName : 'this item'}"?\n\nThis action will mark the item as deleted and sync the changes.',
+          'Are you sure you want to delete "${item is Song ? item.songName : 'this item'}"?\n\nThis action will mark the item as deleted and update the cache.',
         ),
         actions: [
           TextButton(
@@ -289,7 +284,6 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen>
     );
   }
 
-  // Helper method to get change type colors
   Color _getChangeTypeColor(String changeType) {
     switch (changeType.toLowerCase()) {
       case 'created':
@@ -342,7 +336,6 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen>
                     .read(firestoreServiceProvider)
                     .deleteSchedule(schedule.id);
                 
-                // ✅ ADDED: Invalidate for dynamic update
                 ref.invalidate(adminSchedulesProvider);
                 
                 if (!context.mounted) return;
@@ -385,6 +378,7 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen>
       if (mounted) context.go('/');
     }
   }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -486,7 +480,6 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen>
     );
   }
 
-  // ✅ SONGS TAB WITH DYNAMIC UPDATES
   Widget _buildSongsTab() {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
@@ -540,7 +533,6 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen>
                   ),
                 ],
               ),
-
               Container(
                 margin: const EdgeInsets.only(bottom: 16),
                 child: TextField(
@@ -581,7 +573,6 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen>
                   onChanged: (value) => ref.read(adminSongSearchProvider.notifier).state = value,
                 ),
               ),
-
               Expanded(
                 child: songsAsync.when(
                   data: (songs) {
@@ -759,7 +750,6 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen>
     );
   }
 
-  // ✅ SCHEDULE TAB WITH DYNAMIC UPDATES
   Widget _buildScheduleTab() {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
@@ -871,7 +861,6 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen>
                 ],
               ),
             ),
-
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: TextField(
@@ -909,7 +898,6 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen>
                 onChanged: (value) => ref.read(adminScheduleSearchProvider.notifier).state = value,
               ),
             ),
-
             Expanded(
               child: allSchedules.when(
                 data: (schedules) {
@@ -1044,7 +1032,6 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen>
     );
   }
 
-  // ✅ SETTINGS TAB
   Widget _buildSettingsTab() {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
@@ -1056,7 +1043,6 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildDonateUsSection(),
-
             Container(
               margin: const EdgeInsets.only(bottom: 16),
               decoration: BoxDecoration(
@@ -1081,7 +1067,6 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen>
                       ),
                     ),
                     const SizedBox(height: 20),
-
                     _buildSocialLinkSetting(
                       'YouTube Channel',
                       _youtubeController,
@@ -1091,9 +1076,7 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen>
                       Icons.play_circle_fill,
                       Colors.red,
                     ),
-
                     const SizedBox(height: 20),
-
                     _buildSocialLinkSetting(
                       'Instagram Profile',
                       _instagramController,
@@ -1103,15 +1086,13 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen>
                       Icons.camera_alt,
                       Colors.purple,
                     ),
-
                     const SizedBox(height: 20),
-
                     _buildSocialLinkSetting(
                       'WhatsApp Number',
                       _whatsappController,
                       _isWhatsappEnabled,
                       (value) => setState(() => _isWhatsappEnabled = value),
-                      '+1234567890',
+                      'https://chat.whatsapp.com/groupcode',
                       Icons.message,
                       Colors.green,
                     ),
@@ -1119,7 +1100,6 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen>
                 ),
               ),
             ),
-
             Container(
               margin: const EdgeInsets.only(bottom: 16),
               decoration: BoxDecoration(
@@ -1144,7 +1124,6 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen>
                       ),
                     ),
                     const SizedBox(height: 20),
-
                     _buildFeatureToggle(
                       'Share App Feature',
                       _isShareEnabled,
@@ -1152,9 +1131,7 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen>
                       Icons.share,
                       Colors.blue,
                     ),
-
                     const SizedBox(height: 16),
-
                     _buildFeatureToggle(
                       'Rate Us Feature',
                       _isRateUsEnabled,
@@ -1166,7 +1143,6 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen>
                 ),
               ),
             ),
-
             Container(
               margin: const EdgeInsets.only(bottom: 16),
               decoration: BoxDecoration(
@@ -1233,9 +1209,7 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen>
                 ),
               ),
             ),
-
             const SizedBox(height: 24),
-
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
@@ -1302,7 +1276,6 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen>
               ],
             ),
             const SizedBox(height: 16),
-
             if (_isDonateUsEnabled) ...[
               TextField(
                 controller: _donateUsTextController,
@@ -1654,7 +1627,6 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen>
   }
 }
 
-// ✅ SONG FORM DIALOG WITH DYNAMIC SYNC
 class _SongFormDialog extends ConsumerStatefulWidget {
   final Song? song;
   const _SongFormDialog({this.song});
@@ -1691,30 +1663,44 @@ class _SongFormDialogState extends ConsumerState<_SongFormDialog> {
     setState(() => _isLoading = true);
 
     final now = Timestamp.now();
-
-    final newSong = Song(
-      id: widget.song?.id ?? '',
-      songName: _titleController.text.trim(),
-      lyrics: _lyricsController.text.trim(),
-      language: _selectedLanguage!,
-      createdAt: widget.song?.createdAt ?? now,
-      updatedAt: now,
-      changeType: widget.song == null ? 'created' : 'edited',
-      isDeleted: false,
-    );
+    final syncService = ref.read(inc.incrementalSyncServiceProvider);
 
     try {
       final firestore = ref.read(firestoreServiceProvider);
+      String songId;
 
       if (widget.song != null) {
-        await firestore.updateSong(newSong.id, newSong);
+        final updatedSong = Song(
+          id: widget.song!.id,
+          songName: _titleController.text.trim(),
+          lyrics: _lyricsController.text.trim(),
+          language: _selectedLanguage!,
+          createdAt: widget.song!.createdAt,
+          updatedAt: now,
+          changeType: 'edited',
+          isDeleted: false,
+        );
+
+        await firestore.updateSong(updatedSong.id, updatedSong);
+        await syncService.updateSongInCache(updatedSong);
+        songId = updatedSong.id;
       } else {
-        await firestore.addSong(newSong);
+        final newSong = Song(
+          id: '',
+          songName: _titleController.text.trim(),
+          lyrics: _lyricsController.text.trim(),
+          language: _selectedLanguage!,
+          createdAt: now,
+          updatedAt: now,
+          changeType: 'created',
+          isDeleted: false,
+        );
+
+        songId = await firestore.addSong(newSong);
+        final songWithId = newSong.copyWith(id: songId);
+        await syncService.addSongToCache(songWithId);
       }
 
-      final syncService = ref.read(inc.incrementalSyncServiceProvider);
-      await syncService.performIncrementalSync();
-      
       ref.invalidate(adminSongsProvider);
       ref.invalidate(adminSyncStatusProvider);
 
@@ -1799,7 +1785,6 @@ class _SongFormDialogState extends ConsumerState<_SongFormDialog> {
                 ),
                 validator: (v) => v == null ? 'Please select a language' : null,
               ),
-
               if (widget.song != null) ...[
                 const SizedBox(height: 16),
                 Container(
@@ -1814,7 +1799,7 @@ class _SongFormDialogState extends ConsumerState<_SongFormDialog> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'This will mark the song as "edited" and sync the changes immediately.',
+                          'This will mark the song as "edited" and update the cache immediately.',
                           style: GoogleFonts.inter(
                             fontSize: 12,
                             color: Colors.grey.shade700,

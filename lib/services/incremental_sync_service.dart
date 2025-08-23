@@ -300,6 +300,44 @@ class IncrementalSyncService {
     }
   }
 
+  Future<void> addSongToCache(Song song) async {
+    try {
+      await _hiveRepository.addSongToCache(song);
+      debugPrint('Added song to cache: ${song.songName}');
+    } catch (e) {
+      debugPrint('Error adding song to cache: $e');
+      throw Exception('Failed to add song to cache: $e');
+    }
+  }
+
+  Future<void> updateSongInCache(Song song) async {
+    try {
+      await _hiveRepository.updateSongInCache(song);
+      debugPrint('Updated song in cache: ${song.songName}');
+    } catch (e) {
+      debugPrint('Error updating song in cache: $e');
+      throw Exception('Failed to update song in cache: $e');
+    }
+  }
+
+  Future<void> markSongAsDeletedInCache(String songId, String language) async {
+    try {
+      final existingSong = await _hiveRepository.getCachedSongById(songId);
+      if (existingSong != null) {
+        final deletedSong = existingSong.copyWith(
+          isDeleted: true,
+          changeType: 'deleted',
+          updatedAt: Timestamp.now(),
+        );
+        await _hiveRepository.updateSongInCache(deletedSong);
+        debugPrint('Marked song as deleted in cache: $songId');
+      }
+    } catch (e) {
+      debugPrint('Error marking song as deleted: $e');
+      throw Exception('Failed to mark song as deleted: $e');
+    }
+  }
+
   Future<IncrementalSyncResult> syncSpecificLanguage(String language) async {
     try {
       debugPrint('Syncing specific language: $language');

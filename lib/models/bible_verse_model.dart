@@ -1,4 +1,4 @@
-// lib/models/bible_verse_model.dart
+
 class BibleVerse {
   final String id;
   final String book;
@@ -15,8 +15,6 @@ class BibleVerse {
     required this.language,
     required this.createdAt,
   });
-
-  // ✅ ADDED: Missing fromMap factory method
   factory BibleVerse.fromMap(Map<String, dynamic> map, String id) {
     return BibleVerse(
       id: id,

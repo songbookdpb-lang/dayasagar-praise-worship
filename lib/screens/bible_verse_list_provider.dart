@@ -3,10 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/pagination_state.dart';
 import '../../models/bible_verse_model.dart';
-
-// ============================================================================
-// PARAMETER CLASS
-// ============================================================================
 class VerseScreenListParams {
   final String language;
   final String book;
@@ -34,9 +30,6 @@ class VerseScreenListParams {
   String toString() => 'VerseParams($language, $book, $chapter)';
 }
 
-// ============================================================================
-// LANGUAGE DETECTION HELPERS
-// ============================================================================
 bool _isEnglishLocal(String language) {
   final lang = language.trim().toLowerCase();
   return lang == 'english' || lang == 'en-english';
@@ -56,10 +49,6 @@ bool _isLocal(String language) =>
     _isEnglishLocal(language) ||
     _isHindiLocal(language) ||
     _isOdiaLocal(language);
-
-// ============================================================================
-// NOTIFIER CLASS - FULLY OFFLINE
-// ============================================================================
 class BibleVerseListNotifier extends StateNotifier<PaginationState<BibleVerse>> {
   BibleVerseListNotifier(this._params)
       : super(const PaginationState(
@@ -74,11 +63,7 @@ class BibleVerseListNotifier extends StateNotifier<PaginationState<BibleVerse>> 
 
   final VerseScreenListParams _params;
 
-  bool get canLoadMore => false; // Always offline, no pagination
-
-  // ============================================================================
-  // LOAD VERSES FROM LOCAL ASSETS ONLY
-  // ============================================================================
+  bool get canLoadMore => false; 
   Future<void> _loadVerses() async {
     try {
       final verses = await _fetchLocalVerses();
@@ -98,18 +83,11 @@ class BibleVerseListNotifier extends StateNotifier<PaginationState<BibleVerse>> 
       }
     }
   }
-
-  // ============================================================================
-  // REFRESH DATA
-  // ============================================================================
   Future<void> refresh() async {
     state = state.copyWith(isLoading: true, error: null);
     await _loadVerses();
   }
 
-  // ============================================================================
-  // FETCH FROM LOCAL ASSETS (MATCHING YOUR EXACT JSON TEMPLATE)
-  // ============================================================================
   Future<List<BibleVerse>> _fetchLocalVerses() async {
     try {
       final assetPath = _getAssetPath(_params.language);
@@ -120,22 +98,19 @@ class BibleVerseListNotifier extends StateNotifier<PaginationState<BibleVerse>> 
 
       for (final item in jsonData) {
         if (item is Map<String, dynamic>) {
-          // ✅ USING YOUR EXACT FIELD NAMES
           final book = item['book']?.toString() ?? '';
           final chapter = item['chapter']?.toString() ?? '';
           final verseText = item['verse']?.toString() ?? '';
           final language = item['language']?.toString() ?? '';
           final createdAtStr = item['createdAt']?.toString() ?? '';
 
-          // Match the requested book and chapter
           if (book == _params.book && chapter == _params.chapter) {
             if (verseText.isNotEmpty) {
-              // ✅ CREATE BIBLE VERSE MATCHING YOUR TEMPLATE EXACTLY
               verses.add(BibleVerse(
                 id: '${language}_${book}_$chapter',
                 book: book,
-                chapter: chapter, // ✅ String as in your data
-                verse: verseText, // ✅ Full chapter text as in your data
+                chapter: chapter,
+                verse: verseText,
                 language: language,
                 createdAt: createdAtStr.isNotEmpty 
                     ? DateTime.parse(createdAtStr)
@@ -152,9 +127,6 @@ class BibleVerseListNotifier extends StateNotifier<PaginationState<BibleVerse>> 
     }
   }
 
-  // ============================================================================
-  // GET ASSET PATH BASED ON LANGUAGE
-  // ============================================================================
   String _getAssetPath(String language) {
     if (_isEnglishLocal(language)) {
       return 'assets/bible/EN-English/asv.json';
@@ -167,25 +139,15 @@ class BibleVerseListNotifier extends StateNotifier<PaginationState<BibleVerse>> 
     }
   }
 
-  // ============================================================================
-  // NO-OP METHOD
-  // ============================================================================
   Future<void> loadNextPage() async {
     return;
   }
 }
-
-// ============================================================================
-// PROVIDER DEFINITION
-// ============================================================================
 final screenBibleVerseListProvider = StateNotifierProvider.family<
     BibleVerseListNotifier, PaginationState<BibleVerse>, VerseScreenListParams>(
   (ref, params) => BibleVerseListNotifier(params),
 );
 
-// ============================================================================
-// UTILITY PROVIDERS
-// ============================================================================
 final isSupportedLanguageProvider = Provider.family<bool, String>((ref, language) {
   return _isLocal(language);
 });

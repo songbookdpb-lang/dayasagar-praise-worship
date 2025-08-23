@@ -177,7 +177,6 @@ class _BibleChapterListScreenState extends ConsumerState<BibleChapterListScreen>
     super.dispose();
   }
   
-  // ✅ SIMPLIFIED: Only load from local assets (no online functionality)
   Future<void> _loadChaptersData() async {
     if (!_isLocalLanguage(widget.language)) {
       setState(() {
@@ -218,7 +217,6 @@ class _BibleChapterListScreenState extends ConsumerState<BibleChapterListScreen>
     }
   }
   
-  // ✅ SIMPLIFIED: Only refresh local data
   Future<void> _handleRefresh() async {
     HapticFeedback.lightImpact();
     await _loadChaptersData();
@@ -519,8 +517,6 @@ class _BibleChapterListScreenState extends ConsumerState<BibleChapterListScreen>
       ),
     );
   }
-  
-  // ✅ SIMPLIFIED: Only handle local data states
   Widget _buildChapterContent(ThemeData theme, bool isDark) {
     if (_isLoading) {
       return _buildLoadingState(theme, isDark);

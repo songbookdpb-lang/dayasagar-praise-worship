@@ -103,8 +103,6 @@ class _SongLyricsScreenState extends ConsumerState<SongLyricsScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final bgColor = isDark ? const Color(0xFF23232B) : const Color(0xFFFAF3E7);
-
-    // ✅ Use Riverpod provider instead of manual cache calls
     final songAsync = ref.watch(songByIdProvider(widget.songId));
 
     return PopScope(
@@ -228,7 +226,6 @@ class _SongLyricsScreenState extends ConsumerState<SongLyricsScreen> {
                 GestureDetector(
                   onTap: () {
                     HapticFeedback.mediumImpact();
-                    // ✅ Refresh using Riverpod invalidation
                     ref.invalidate(songByIdProvider(widget.songId));
                   },
                   child: Container(
@@ -287,7 +284,6 @@ class _SongLyricsScreenState extends ConsumerState<SongLyricsScreen> {
     return RefreshIndicator(
       onRefresh: () async {
         HapticFeedback.lightImpact();
-        // ✅ Refresh using Riverpod invalidation
         ref.invalidate(songByIdProvider(widget.songId));
       },
       color: isDark ? Colors.amber[300] : Colors.brown,
@@ -371,7 +367,6 @@ class _SongLyricsScreenState extends ConsumerState<SongLyricsScreen> {
               GestureDetector(
                 onTap: () {
                   HapticFeedback.selectionClick();
-                  // ✅ Refresh using Riverpod invalidation
                   ref.invalidate(songByIdProvider(widget.songId));
                 },
                 child: Text(

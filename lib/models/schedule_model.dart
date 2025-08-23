@@ -14,8 +14,6 @@ class Schedule {
     required this.songIds,
     required this.bibleIds,
   });
-
-  // For your firestore_service.dart fromFirestore calls
   static Schedule fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     return Schedule(
@@ -27,7 +25,6 @@ class Schedule {
     );
   }
 
-  // For your firestore_service.dart toFirestore calls
   Map<String, dynamic> toFirestore() {
     return {
       'scheduleDate': scheduleDate,
@@ -37,7 +34,6 @@ class Schedule {
     };
   }
 
-  // Keep existing methods for compatibility
   factory Schedule.fromMap(Map<String, dynamic> map, String documentId) {
     return Schedule(
       id: documentId,

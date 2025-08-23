@@ -20,8 +20,6 @@ class Song {
     required this.changeType,
     required this.isDeleted,
   });
-
-  // ✅ FIXED: Added single-parameter fromMap for cache compatibility
   factory Song.fromMap(Map<String, dynamic> map) {
     return Song(
       id: map['id'] ?? '',
@@ -34,8 +32,6 @@ class Song {
       isDeleted: map['isDeleted'] ?? false,
     );
   }
-
-  // ✅ KEPT: Two-parameter version for Firestore compatibility
   factory Song.fromMapWithId(Map<String, dynamic> map, String documentId) {
     return Song(
       id: documentId,
@@ -48,8 +44,6 @@ class Song {
       isDeleted: map['isDeleted'] ?? false,
     );
   }
-
-  // ✅ ADDED: Helper method to parse timestamps safely
   static Timestamp _parseTimestamp(dynamic value) {
     if (value == null) return Timestamp.now();
     if (value is Timestamp) return value;
@@ -65,7 +59,6 @@ class Song {
     return Timestamp.now();
   }
 
-  // ✅ UPDATED: Include id in toMap for cache storage
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -79,7 +72,6 @@ class Song {
     };
   }
 
-  // ✅ KEPT: Firestore methods (without id since Firestore handles it)
   static Song fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     return Song(
@@ -106,7 +98,6 @@ class Song {
     };
   }
 
-  // ✅ ADDED: Convenience methods
   Song copyWith({
     String? id,
     String? songName,
@@ -142,8 +133,6 @@ class Song {
 
   @override
   int get hashCode => id.hashCode;
-
-  // ✅ ADDED: Validation methods
   bool get isValid {
     return id.isNotEmpty && 
            songName.trim().isNotEmpty && 
@@ -156,7 +145,6 @@ class Song {
   bool get isDeletedSong => changeType == 'deleted' || isDeleted;
 }
 
-// ✅ ADDED: Extension for list operations
 extension SongListExtensions on List<Song> {
   List<Song> get activeSongs => where((song) => !song.isDeleted).toList();
   List<Song> get deletedSongs => where((song) => song.isDeleted).toList();

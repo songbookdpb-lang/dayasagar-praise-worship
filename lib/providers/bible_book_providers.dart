@@ -11,12 +11,6 @@ class PersistentCacheService {
     final dir = await getApplicationDocumentsDirectory();
     return File('${dir.path}/cache_$key.json');
   }
-
-  // ============================================================================
-  // GENERIC CACHE METHODS (Required by bible_book_providers.dart)
-  // ============================================================================
-
-  /// Get cached data as List<String> (for bible books provider)
   Future<List<String>?> get(String key) async {
     try {
       final file = await _getCacheFile(key);
@@ -25,12 +19,10 @@ class PersistentCacheService {
       final jsonString = await file.readAsString();
       final data = jsonDecode(jsonString);
       
-      // Handle different data structures
       if (data is Map<String, dynamic>) {
         if (data.containsKey('items') && data['items'] is List) {
           return List<String>.from(data['items']);
         } else if (data.containsKey('text') && data['text'] is String) {
-          // Handle old schedule format - return as single item list
           return [data['text'] as String];
         }
       } else if (data is List) {
@@ -44,7 +36,6 @@ class PersistentCacheService {
     }
   }
 
-  /// Set cached data as List<String> with expiration
   Future<bool> set(String key, List<String> value, Duration? duration) async {
     try {
       final file = await _getCacheFile(key);
@@ -64,7 +55,6 @@ class PersistentCacheService {
     }
   }
 
-  /// Delete specific cached item
   Future<bool> delete(String key) async {
     try {
       final file = await _getCacheFile(key);
@@ -78,8 +68,6 @@ class PersistentCacheService {
       return false;
     }
   }
-
-  /// Check if cached data is still valid (not expired)
   Future<bool> isValid(String key) async {
     try {
       final file = await _getCacheFile(key);
@@ -96,18 +84,12 @@ class PersistentCacheService {
         }
       }
       
-      return true; // No expiration set, consider valid
+      return true; 
     } catch (e) {
       print('Cache validity check error for key $key: $e');
       return false;
     }
   }
-
-  // ============================================================================
-  // EXISTING SCHEDULE-SPECIFIC METHODS (Backward Compatibility)
-  // ============================================================================
-
-  /// Cache a schedule (legacy method - kept for compatibility)
   Future<void> cacheSchedule(String key, String scheduleText) async {
     final file = await _getCacheFile(key);
     await file.writeAsString(jsonEncode({
@@ -116,7 +98,6 @@ class PersistentCacheService {
     }));
   }
 
-  /// Get a cached schedule (legacy method - kept for compatibility)
   Future<String?> getCachedSchedule(String key) async {
     final file = await _getCacheFile(key);
     if (!await file.exists()) return null;
@@ -129,12 +110,6 @@ class PersistentCacheService {
       return null;
     }
   }
-
-  // ============================================================================
-  // CACHE MANAGEMENT METHODS
-  // ============================================================================
-
-  /// Clear all caches in the cache directory
   Future<void> clearAllCache() async {
     final dir = await getApplicationDocumentsDirectory();
     final cachedFiles = dir.listSync().where((f) => f.path.contains('cache_'));
@@ -148,8 +123,6 @@ class PersistentCacheService {
       }
     }
   }
-
-  /// Clear expired caches only
   Future<void> clearExpiredCache() async {
     final dir = await getApplicationDocumentsDirectory();
     final cachedFiles = dir.listSync().where((f) => f.path.contains('cache_'));
@@ -177,7 +150,6 @@ class PersistentCacheService {
     }
   }
 
-  /// Get cache statistics
   Future<Map<String, dynamic>> getCacheStats() async {
     final dir = await getApplicationDocumentsDirectory();
     final cachedFiles = dir.listSync().where((f) => f.path.contains('cache_')).toList();
@@ -206,7 +178,6 @@ class PersistentCacheService {
     };
   }
 
-  /// Get cache size in MB
   Future<double> getCacheSizeMB() async {
     final dir = await getApplicationDocumentsDirectory();
     final cachedFiles = dir.listSync().where((f) => f.path.contains('cache_')).toList();
@@ -225,7 +196,6 @@ class PersistentCacheService {
     return totalBytes / (1024 * 1024);
   }
 
-  /// Get individual cache file info
   Future<Map<String, dynamic>> getCacheInfo(String key) async {
     try {
       final file = await _getCacheFile(key);

@@ -4,8 +4,8 @@ class PaginationState<T> {
   final bool isLoading;
   final bool hasMore;
   final bool isFromCache;
-  final bool isInitialized; // ✅ Added
-  final int currentPage; // ✅ Added  
+  final bool isInitialized;
+  final int currentPage;  
   final dynamic error;
 
   const PaginationState({
@@ -13,8 +13,8 @@ class PaginationState<T> {
     this.isLoading = false,
     this.hasMore = false,
     this.isFromCache = false,
-    this.isInitialized = false, // ✅ Added
-    this.currentPage = 0, // ✅ Added
+    this.isInitialized = false, 
+    this.currentPage = 0,
     this.error,
   });
 
@@ -23,8 +23,8 @@ class PaginationState<T> {
     bool? isLoading,
     bool? hasMore,
     bool? isFromCache,
-    bool? isInitialized, // ✅ Added
-    int? currentPage, // ✅ Added
+    bool? isInitialized, 
+    int? currentPage,
     dynamic error,
   }) {
     return PaginationState<T>(

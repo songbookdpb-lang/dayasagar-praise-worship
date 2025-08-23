@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../models/song_models.dart';
-import 'song_list_provider.dart'; // Your provider file
+import 'song_list_provider.dart'; 
 
 bool _isSadriLocal(String language) {
   final lang = language.trim().toLowerCase();
@@ -35,7 +35,6 @@ class _SongListScreenState extends ConsumerState<SongListScreen> {
     super.initState();
     _searchController.addListener(() {
       if (mounted) {
-        // Use Riverpod provider for search
         ref.read(songSearchQueryProvider(widget.language).notifier).state = _searchController.text;
       }
     });
@@ -54,7 +53,6 @@ class _SongListScreenState extends ConsumerState<SongListScreen> {
       _isSearching = !_isSearching;
       if (!_isSearching) {
         _searchController.clear();
-        // Clear search in provider
         ref.read(songSearchQueryProvider(widget.language).notifier).state = '';
         _searchFocusNode.unfocus();
       } else {
@@ -146,13 +144,11 @@ class _SongListScreenState extends ConsumerState<SongListScreen> {
                 ),
               ),
             ),
-            // ✅ ADDED: Overall content padding
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4.0),
               child: Column(
                 children: [
                   if (_isSearching) _buildSearchBar(),
-                  // ✅ ADDED: Spacing between search and content
                   if (_isSearching) const SizedBox(height: 8),
                   Expanded(
                     child: _isSearching
@@ -173,7 +169,6 @@ class _SongListScreenState extends ConsumerState<SongListScreen> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Container(
-      // ✅ INCREASED: Padding for better spacing
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
       child: TextField(
         controller: _searchController,
@@ -211,7 +206,6 @@ class _SongListScreenState extends ConsumerState<SongListScreen> {
           ),
           filled: true,
           fillColor: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.1),
-          // ✅ INCREASED: Content padding for better text positioning
           contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         ),
         textInputAction: TextInputAction.search,
@@ -223,13 +217,11 @@ class _SongListScreenState extends ConsumerState<SongListScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     
-    // Use Riverpod provider for search results
     final searchResultsAsync = ref.watch(songSearchResultsProvider(widget.language));
 
     if (_searchController.text.isEmpty) {
       return Center(
         child: Padding(
-          // ✅ ADDED: Padding around empty state
           padding: const EdgeInsets.all(32),
           child: Text(
             'Start typing to search songs',
@@ -271,7 +263,6 @@ class _SongListScreenState extends ConsumerState<SongListScreen> {
             ref.invalidate(songSearchResultsProvider(widget.language));
           },
           child: ListView.builder(
-            // ✅ ENHANCED: Better padding with top/bottom spacing
             padding: const EdgeInsets.fromLTRB(28, 12, 28, 32),
             itemCount: songs.length,
             itemBuilder: (context, index) {
@@ -284,7 +275,6 @@ class _SongListScreenState extends ConsumerState<SongListScreen> {
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, stack) => Center(
         child: Padding(
-          // ✅ ADDED: Padding around error state
           padding: const EdgeInsets.all(32),
           child: Text(
             'Error: $error',
@@ -299,7 +289,6 @@ class _SongListScreenState extends ConsumerState<SongListScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     
-    // Use Riverpod provider for songs
     final songsAsync = ref.watch(cachedSongsProvider(widget.language));
 
     return songsAsync.when(
@@ -309,7 +298,6 @@ class _SongListScreenState extends ConsumerState<SongListScreen> {
         if (activeSongs.isEmpty) {
           return Center(
             child: Padding(
-              // ✅ ADDED: Padding around empty state
               padding: const EdgeInsets.all(32),
               child: Text(
                 'No ${widget.language} songs available',
@@ -327,12 +315,10 @@ class _SongListScreenState extends ConsumerState<SongListScreen> {
         return RefreshIndicator(
           onRefresh: () async {
             ref.invalidate(cachedSongsProvider(widget.language));
-            // Trigger sync
             final syncNotifier = ref.read(syncStatusProvider.notifier);
             await syncNotifier.performSync();
           },
           child: ListView.builder(
-            // ✅ ENHANCED: Better padding with comfortable spacing
             padding: const EdgeInsets.fromLTRB(28, 20, 28, 32),
             itemCount: activeSongs.length,
             itemBuilder: (context, index) {
@@ -344,14 +330,12 @@ class _SongListScreenState extends ConsumerState<SongListScreen> {
       },
       loading: () => Center(
         child: Padding(
-          // ✅ ADDED: Padding around loading state
           padding: const EdgeInsets.all(32),
           child: CircularProgressIndicator(color: theme.colorScheme.primary),
         ),
       ),
       error: (error, stack) => Center(
         child: Padding(
-          // ✅ ADDED: Padding around error state
           padding: const EdgeInsets.all(32),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -381,7 +365,6 @@ class _SongListScreenState extends ConsumerState<SongListScreen> {
   Widget _buildSongCard(Song song, bool isDark) {
     return Container(
       width: double.infinity,
-      // ✅ INCREASED: Bottom margin for better spacing between cards
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.1),
@@ -397,12 +380,10 @@ class _SongListScreenState extends ConsumerState<SongListScreen> {
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
           onTap: () {
-            // Add to recently played
             ref.read(recentlyPlayedProvider.notifier).addRecentSong(song.id);
             context.push('/song/${song.id}');
           },
           child: Padding(
-            // ✅ ENHANCED: Better internal padding for song cards
             padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 28),
             child: Center(
               child: Text(

@@ -360,7 +360,6 @@ final autoSyncProvider = StreamProvider<void>((ref) async* {
       final syncService = ref.read(incrementalSyncServiceProvider);
       await syncService.performIncrementalSync();
     } catch (e) {
-      // ✅ FIXED: Added error logging instead of empty catch
       print('Auto-sync error: $e');
     }
     yield null;
@@ -464,11 +463,10 @@ final recentlyPlayedSongsProvider = Provider<List<Song>>((ref) {
         try {
           return allSongs.firstWhere((song) => song.id == id);
         } catch (e) {
-          // ✅ FIXED: Return null instead of throwing, then filter out nulls
           return null;
         }
       })
-      .where((song) => song != null) // ✅ FIXED: This comparison is now valid
+      .where((song) => song != null) 
       .cast<Song>()
       .toList();
 });
@@ -544,7 +542,6 @@ final filteredSongsProvider = Provider<List<Song>>((ref) {
     if (filter.isFavorite == true && !favorites.contains(song.id)) return false;
     if (filter.isFavorite == false && favorites.contains(song.id)) return false;
     
-    // ✅ FIXED: Convert Timestamp to DateTime before comparison
     if (filter.fromDate != null && song.createdAt.toDate().isBefore(filter.fromDate!)) return false;
     if (filter.toDate != null && song.createdAt.toDate().isAfter(filter.toDate!)) return false;
     

@@ -6,9 +6,6 @@ import '../models/pagination_state.dart';
 import 'bible_verse_list_provider.dart' as screen_providers;
 import '../models/bible_verse_model.dart';
 
-// ============================================================================
-// Language Detection Helpers
-// ============================================================================
 
 bool _isEnglishLocal(String language) {
   final lang = language.trim().toLowerCase();
@@ -30,17 +27,11 @@ bool _isLocal(String language) =>
     _isHindiLocal(language) ||
     _isOdiaLocal(language);
 
-// ============================================================================
-// Verse Splitting Helper
-// ============================================================================
-
-/// Splits a verse field like "1 ... 2 ... 3 ..." into a Map<verseNum, text>
 List<MapEntry<int, String>> splitIntoVerses(String combined) {
-  final regExp = RegExp(r'(\d+)\s'); // matches number followed by space
+  final regExp = RegExp(r'(\d+)\s');
   final matches = regExp.allMatches(combined);
 
   if (matches.isEmpty) {
-    // No verse numbers found, treat whole string as one verse
     return [MapEntry(1, combined)];
   }
 
@@ -49,7 +40,6 @@ List<MapEntry<int, String>> splitIntoVerses(String combined) {
     final current = matches.elementAt(i);
     final verseNum = int.parse(current.group(1)!);
 
-    // Determine start index of verse text
     final start = current.end;
     final end = (i < matches.length - 1)
         ? matches.elementAt(i + 1).start
@@ -189,7 +179,6 @@ class _BibleVerseListScreenState extends ConsumerState<BibleVerseListScreen> {
           data: Theme.of(context).copyWith(
             textTheme:
                 Theme.of(context).textTheme.apply(fontFamily: 'Merriweather'),
-            // ✅ FORCE NO UNDERLINES ANYWHERE
             textButtonTheme: TextButtonThemeData(
               style: TextButton.styleFrom(
                 textStyle: const TextStyle(decoration: TextDecoration.none),
@@ -298,17 +287,16 @@ class _BibleVerseListScreenState extends ConsumerState<BibleVerseListScreen> {
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
                     color: isDark ? Colors.amber[200] : Colors.brown,
-                    decoration: TextDecoration.none, // ✅ EXPLICIT NO UNDERLINE
+                    decoration: TextDecoration.none, 
                   ),
                 ),
               ),
               const Spacer(),
-              // ✅ ADDED: Offline indicator for local languages
               if (_isLocal(widget.language))
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.green.withValues(alpha: 0.2), // ✅ FIXED: withValues
+                    color: Colors.green.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Text(
@@ -332,7 +320,7 @@ class _BibleVerseListScreenState extends ConsumerState<BibleVerseListScreen> {
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
                     color: isDark ? Colors.amber[200] : Colors.brown,
-                    decoration: TextDecoration.none, // ✅ EXPLICIT NO UNDERLINE
+                    decoration: TextDecoration.none,
                   ),
                 ),
               ),
@@ -353,7 +341,7 @@ class _BibleVerseListScreenState extends ConsumerState<BibleVerseListScreen> {
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
                     color: isDark ? Colors.amber[200] : Colors.brown,
-                    decoration: TextDecoration.none, // ✅ EXPLICIT NO UNDERLINE
+                    decoration: TextDecoration.none, 
                   ),
                 ),
               ),
@@ -368,7 +356,7 @@ class _BibleVerseListScreenState extends ConsumerState<BibleVerseListScreen> {
               fontSize: 28,
               color: isDark ? Colors.white : const Color(0xFF2B1810),
               height: 1.2,
-              decoration: TextDecoration.none, // ✅ EXPLICIT NO UNDERLINE
+              decoration: TextDecoration.none, 
             ),
           ),
           const SizedBox(height: 8),
@@ -380,7 +368,7 @@ class _BibleVerseListScreenState extends ConsumerState<BibleVerseListScreen> {
               fontSize: 14,
               color: isDark ? Colors.white70 : const Color(0xFF6D5742),
               fontStyle: FontStyle.italic,
-              decoration: TextDecoration.none, // ✅ EXPLICIT NO UNDERLINE
+              decoration: TextDecoration.none, 
             ),
           ),
           const SizedBox(height: 20),
@@ -400,7 +388,7 @@ class _BibleVerseListScreenState extends ConsumerState<BibleVerseListScreen> {
           fontSize: 14,
           fontWeight: FontWeight.bold,
           color: isDark ? Colors.white : const Color(0xFF2B1810),
-          decoration: TextDecoration.none, // ✅ EXPLICIT NO UNDERLINE
+          decoration: TextDecoration.none, 
         ),
         decoration: InputDecoration(
           hintText: 'Search verses in this chapter...',
@@ -408,7 +396,7 @@ class _BibleVerseListScreenState extends ConsumerState<BibleVerseListScreen> {
             fontFamily: 'Merriweather',
             fontWeight: FontWeight.bold,
             color: isDark ? Colors.white54 : const Color(0xFF6D5742),
-            decoration: TextDecoration.none, // ✅ EXPLICIT NO UNDERLINE
+            decoration: TextDecoration.none, 
           ),
           border: UnderlineInputBorder(
             borderSide: BorderSide(
@@ -445,7 +433,7 @@ class _BibleVerseListScreenState extends ConsumerState<BibleVerseListScreen> {
               fontSize: 18,
               color: isDark ? Colors.white70 : const Color(0xFF6D5742),
               fontStyle: FontStyle.italic,
-              decoration: TextDecoration.none, // ✅ EXPLICIT NO UNDERLINE
+              decoration: TextDecoration.none, 
             ),
           ),
         ),
@@ -465,7 +453,7 @@ class _BibleVerseListScreenState extends ConsumerState<BibleVerseListScreen> {
                   fontWeight: FontWeight.bold,
                   fontSize: 18,
                   color: isDark ? Colors.white70 : const Color(0xFF6D5742),
-                  decoration: TextDecoration.none, // ✅ EXPLICIT NO UNDERLINE
+                  decoration: TextDecoration.none,
                 ),
               ),
               const SizedBox(height: 8),
@@ -490,11 +478,10 @@ class _BibleVerseListScreenState extends ConsumerState<BibleVerseListScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ✅ ENHANCED: Search results header
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: (isDark ? Colors.amber[300] : Colors.brown)!.withValues(alpha: 0.1), // ✅ FIXED: withValues
+              color: (isDark ? Colors.amber[300] : Colors.brown)!.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
@@ -521,7 +508,6 @@ class _BibleVerseListScreenState extends ConsumerState<BibleVerseListScreen> {
             ),
           ),
           const SizedBox(height: 20),
-          // Split and display each verse on separate lines
           ..._filteredVerses.asMap().entries.expand((entry) {
             final verseEntries = splitIntoVerses(entry.value.verse);
             
@@ -556,12 +542,12 @@ class _BibleVerseListScreenState extends ConsumerState<BibleVerseListScreen> {
                         fontWeight: FontWeight.bold,
                         fontSize: _fontSize,
                         color: isDark
-                            ? Colors.white.withValues(alpha: 0.96) // ✅ FIXED: withValues
+                            ? Colors.white.withValues(alpha: 0.96)
                             : const Color(0xFF2B1810),
                         height: 2.0,
                         wordSpacing: 1.3,
                         letterSpacing: 0.12,
-                        decoration: TextDecoration.none, // ✅ EXPLICIT NO UNDERLINE
+                        decoration: TextDecoration.none,
                       ),
                       textAlign: TextAlign.left,
                     ),
@@ -584,13 +570,12 @@ class _BibleVerseListScreenState extends ConsumerState<BibleVerseListScreen> {
         children: [
           Row(
             children: [
-              // ✅ ENHANCED: Better font control styling
               GestureDetector(
                 onTap: _decreaseFontSize,
                 child: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: (isDark ? Colors.amber[300] : Colors.brown)!.withValues(alpha: 0.1), // ✅ FIXED: withValues
+                    color: (isDark ? Colors.amber[300] : Colors.brown)!.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -600,7 +585,7 @@ class _BibleVerseListScreenState extends ConsumerState<BibleVerseListScreen> {
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                       color: isDark ? Colors.amber[300] : Colors.brown,
-                      decoration: TextDecoration.none, // ✅ EXPLICIT NO UNDERLINE
+                      decoration: TextDecoration.none, 
                     ),
                   ),
                 ),
@@ -609,7 +594,7 @@ class _BibleVerseListScreenState extends ConsumerState<BibleVerseListScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  color: (isDark ? Colors.amber[300] : Colors.brown)!.withValues(alpha: 0.15), // ✅ FIXED: withValues
+                  color: (isDark ? Colors.amber[300] : Colors.brown)!.withValues(alpha: 0.15), 
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -619,7 +604,7 @@ class _BibleVerseListScreenState extends ConsumerState<BibleVerseListScreen> {
                     fontWeight: FontWeight.bold,
                     color: isDark ? Colors.amber[200] : Colors.brown,
                     fontSize: 14,
-                    decoration: TextDecoration.none, // ✅ EXPLICIT NO UNDERLINE
+                    decoration: TextDecoration.none, 
                   ),
                 ),
               ),
@@ -629,8 +614,8 @@ class _BibleVerseListScreenState extends ConsumerState<BibleVerseListScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: (isDark ? Colors.amber[300] : Colors.brown)!.withValues(alpha: 0.1), // ✅ FIXED: withValues
-                    borderRadius: BorderRadius.circular(8),
+                    color: (isDark ? Colors.amber[300] : Colors.brown)!.withValues(alpha: 0.1), 
+                                        borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     'A⁺',
@@ -639,7 +624,7 @@ class _BibleVerseListScreenState extends ConsumerState<BibleVerseListScreen> {
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                       color: isDark ? Colors.amber[300] : Colors.brown,
-                      decoration: TextDecoration.none, // ✅ EXPLICIT NO UNDERLINE
+                      decoration: TextDecoration.none,
                     ),
                   ),
                 ),
@@ -647,7 +632,6 @@ class _BibleVerseListScreenState extends ConsumerState<BibleVerseListScreen> {
             ],
           ),
           const SizedBox(height: 30),
-          // Split and display each verse on separate lines
           ...verses.asMap().entries.expand((entry) {
             final verseEntries = splitIntoVerses(entry.value.verse);
             
@@ -669,7 +653,7 @@ class _BibleVerseListScreenState extends ConsumerState<BibleVerseListScreen> {
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
                         color: Colors.white,
-                        decoration: TextDecoration.none, // ✅ EXPLICIT NO UNDERLINE
+                        decoration: TextDecoration.none, 
                       ),
                     ),
                   ),
@@ -682,12 +666,12 @@ class _BibleVerseListScreenState extends ConsumerState<BibleVerseListScreen> {
                         fontWeight: FontWeight.bold,
                         fontSize: _fontSize,
                         color: isDark
-                            ? Colors.white.withValues(alpha: 0.96) // ✅ FIXED: withValues
+                            ? Colors.white.withValues(alpha: 0.96)
                             : const Color(0xFF2B1810),
                         height: 2.0,
                         wordSpacing: 1.3,
                         letterSpacing: 0.12,
-                        decoration: TextDecoration.none, // ✅ EXPLICIT NO UNDERLINE
+                        decoration: TextDecoration.none,
                       ),
                       textAlign: TextAlign.left,
                     ),

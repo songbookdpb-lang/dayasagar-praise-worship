@@ -9,13 +9,11 @@ class PersistentCacheService {
   factory PersistentCacheService() => _instance;
   PersistentCacheService._internal();
 
-  // ✅ ADDED: Missing initialize method
+ 
   Future<void> initialize() async {
-    // This method can be empty since file operations don't need initialization
-    // but it's required by IncrementalSyncService
+   
     try {
       final dir = await getApplicationDocumentsDirectory();
-      // Ensure directory exists
       if (!await dir.exists()) {
         await dir.create(recursive: true);
       }
@@ -148,7 +146,6 @@ class PersistentCacheService {
       final languages = <String>[];
       for (final file in cachedFiles) {
         final fileName = file.path.split('/').last;
-        // ✅ FIXED: Corrected regex pattern
         final match = RegExp(r'cache_songs_(.+)\.json').firstMatch(fileName);
         if (match != null) {
           languages.add(match.group(1)!);
@@ -162,7 +159,6 @@ class PersistentCacheService {
     }
   }
 
-  // ✅ UPDATED: Method name to match what IncrementalSyncService expects
   Future<bool> saveLastSyncTimestamp(String collection, int timestamp) async {
     try {
       final key = 'last_sync_$collection';
@@ -181,7 +177,6 @@ class PersistentCacheService {
     }
   }
 
-  // ✅ UPDATED: Return type to match what IncrementalSyncService expects
   Future<int?> getLastSyncTimestamp(String collection) async {
     try {
       final key = 'last_sync_$collection';
@@ -201,8 +196,6 @@ class PersistentCacheService {
       return null;
     }
   }
-
-  // ✅ ADDED: Missing clearSyncTimestamp method
   Future<void> clearSyncTimestamp(String collection) async {
     try {
       final key = 'last_sync_$collection';
@@ -215,12 +208,10 @@ class PersistentCacheService {
     }
   }
 
-  // ✅ KEPT: Original method for backward compatibility
   Future<bool> setLastSyncTimestamp(String collection, DateTime timestamp) async {
     return await saveLastSyncTimestamp(collection, timestamp.millisecondsSinceEpoch);
   }
 
-  // ✅ ADDED: Method to get DateTime version (for backward compatibility)
   Future<DateTime?> getLastSyncTimestampAsDateTime(String collection) async {
     final timestamp = await getLastSyncTimestamp(collection);
     if (timestamp != null) {

@@ -226,7 +226,7 @@ class _BibleVerseScreenState extends State<BibleVerseScreen> {
                 fontWeight: FontWeight.bold,
                 fontSize: 20,
                 fontStyle: FontStyle.italic,
-                color: Color(0xFF6D5742), // subtle brown ink
+                color: Color(0xFF6D5742), 
                 letterSpacing: 0.3,
               ),
             ),
@@ -266,7 +266,7 @@ class _BibleVerseScreenState extends State<BibleVerseScreen> {
               style: TextStyle(
                 fontFamily: 'Merriweather',
                 fontSize: _fontSize,
-                color: const Color(0xFF3A2B1E), // deep brown
+                color: const Color(0xFF3A2B1E), 
                 height: 2.0,
                 wordSpacing: 1.6,
                 letterSpacing: 0.2,

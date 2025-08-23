@@ -1,4 +1,4 @@
-// lib/screens/bible_language_screen.dart - MATCH IMAGE DESIGN
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,8 +15,6 @@ class _BibleLanguageScreenState extends ConsumerState<BibleLanguageScreen> {
   bool _isSearching = false;
   final _searchController = TextEditingController();
   final _searchFocusNode = FocusNode();
-
-  // Clean language list
   final List<Map<String, String>> _languages = [
     {
       'name': 'English',
@@ -182,7 +180,6 @@ class _BibleLanguageScreenState extends ConsumerState<BibleLanguageScreen> {
         appBar: _buildAppBar(theme, isDark),
         body: Stack(
           children: [
-            // Keep original gradient background
             Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -202,7 +199,6 @@ class _BibleLanguageScreenState extends ConsumerState<BibleLanguageScreen> {
                 ),
               ),
             ),
-            // Keep background cross image
             Positioned.fill(
               child: Opacity(
                 opacity: isDark ? 0.12 : 0.06,
@@ -331,7 +327,7 @@ class _BibleLanguageScreenState extends ConsumerState<BibleLanguageScreen> {
         children: [
           Text(
             '',
-            textAlign: TextAlign.center, // Center align header
+            textAlign: TextAlign.center, 
             style: GoogleFonts.inter(
               fontSize: 16,
               fontWeight: FontWeight.w500,
@@ -405,11 +401,11 @@ class _BibleLanguageScreenState extends ConsumerState<BibleLanguageScreen> {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center, // Center align content
+                    crossAxisAlignment: CrossAxisAlignment.center, 
                     children: [
                       Text(
                         language['name']!,
-                        textAlign: TextAlign.center, // Center align text
+                        textAlign: TextAlign.center,
                         style: GoogleFonts.inter(
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
@@ -419,7 +415,7 @@ class _BibleLanguageScreenState extends ConsumerState<BibleLanguageScreen> {
                       const SizedBox(height: 4),
                       Text(
                         language['description']!,
-                        textAlign: TextAlign.center, // Center align text
+                        textAlign: TextAlign.center, 
                         style: GoogleFonts.inter(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,

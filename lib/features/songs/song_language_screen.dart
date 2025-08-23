@@ -8,7 +8,6 @@ import '../../services/incremental_sync_service.dart';
 
 final globalSongSearchProvider = StateProvider<String>((ref) => '');
 
-// ✅ FIXED: Proper search implementation
 final globalSongSearchResultsProvider = FutureProvider<List<Song>>((ref) async {
   final query = ref.watch(globalSongSearchProvider);
   if (query.trim().isEmpty) return [];
@@ -264,7 +263,6 @@ class _SongLanguageScreenState extends ConsumerState<SongLanguageScreen> {
     );
   }
 
-  // ✅ FIXED: Not perfectly centered - uses moderate spacing from top
   Widget _buildLanguageList() {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
@@ -273,7 +271,7 @@ class _SongLanguageScreenState extends ConsumerState<SongLanguageScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 32),
       child: Column(
         children: [
-          const SizedBox(height: 40), // Moderate distance from header
+          const SizedBox(height: 40), 
           ..._songLanguages.map((language) {
             return Container(
               width: double.infinity,
@@ -311,7 +309,7 @@ class _SongLanguageScreenState extends ConsumerState<SongLanguageScreen> {
               ),
             );
           }).toList(),
-          const Spacer(), // Pushes content to natural position, not centered
+          const Spacer(),
         ],
       ),
     );

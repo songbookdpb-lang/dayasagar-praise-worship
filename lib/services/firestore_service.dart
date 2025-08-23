@@ -1,4 +1,4 @@
-// lib/services/firestore_service.dart
+
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
@@ -406,7 +406,6 @@ class FirestoreService {
       return null;
     }
   }
-  // Add this to your FirestoreService class
 Future<void> updateSchedule(String scheduleId, Schedule schedule) async {
   try {
     await _firestore

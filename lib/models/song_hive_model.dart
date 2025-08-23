@@ -2,7 +2,7 @@ import 'package:hive/hive.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'song_models.dart';
 
-part 'song_hive_model.g.dart'; // This will be generated
+part 'song_hive_model.g.dart'; 
 
 @HiveType(typeId: 0)
 class SongHive extends HiveObject {
@@ -35,8 +35,6 @@ class SongHive extends HiveObject {
 
   @HiveField(9)
   int fetchBatch;
-
-  // ✅ FIXED: Proper constructor with curly braces for named parameters
   SongHive({
     required this.id,
     required this.songName,
@@ -50,7 +48,6 @@ class SongHive extends HiveObject {
     this.fetchBatch = 0,
   });
 
-  // ✅ FIXED: Factory constructor with proper curly braces for named parameters
   factory SongHive.fromSong(Song song, {int fetchBatch = 0}) {
     return SongHive(
       id: song.id,
@@ -66,7 +63,6 @@ class SongHive extends HiveObject {
     );
   }
 
-  // ✅ FIXED: Method to convert to Song model
   Song toSong() {
     return Song(
       id: id,
@@ -79,8 +75,6 @@ class SongHive extends HiveObject {
       isDeleted: isDeleted,
     );
   }
-
-  // ✅ FIXED: CopyWith method with proper named parameters
   SongHive copyWith({
     String? id,
     String? songName,
@@ -108,7 +102,6 @@ class SongHive extends HiveObject {
   }
 }
 
-// ✅ FIXED: SyncMetadata with proper Hive annotations
 @HiveType(typeId: 1)
 class SyncMetadata extends HiveObject {
   @HiveField(0)
@@ -125,8 +118,6 @@ class SyncMetadata extends HiveObject {
 
   @HiveField(4)
   bool hasMoreData;
-
-  // ✅ FIXED: Constructor with proper named parameters
   SyncMetadata({
     required this.language,
     required this.lastSyncTime,

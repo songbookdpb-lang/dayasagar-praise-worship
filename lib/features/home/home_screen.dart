@@ -673,7 +673,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  // Continue with existing UI methods...
   Widget _buildBackgroundShapes() {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
