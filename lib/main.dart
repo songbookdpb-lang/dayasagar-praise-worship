@@ -1,3 +1,4 @@
+import 'package:dayasagar_praise_worship/repositories/song_hive_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,14 +6,22 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'router.dart';
+import 'services/persistent_cache_service.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  WidgetsFlutterBinding.ensureInitialized(); // ✅ Called only once
   
+  // ✅ Clean initialization sequence
   await Firebase.initializeApp();
   
   await Hive.initFlutter();
   
+  await SongHiveRepository.initialize();
+  
+  final cacheService = PersistentCacheService(); // ✅ Declared only once
+  await cacheService.initialize();
+  
+  // System UI configuration
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -34,6 +43,35 @@ void main() async {
   runApp(const ProviderScope(child: SundayLyricsApp()));
 }
 
+class SundayLyricsApp extends ConsumerWidget {
+  const SundayLyricsApp({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final router = ref.watch(goRouterProvider);
+    
+    return MaterialApp.router(
+      title: 'Dayasagar Praise & Worship',
+      debugShowCheckedModeBanner: false,
+      
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.system,
+      routerConfig: router,
+      
+      builder: (context, child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(
+            textScaler: const TextScaler.linear(1.0), // ✅ Fixed deprecated textScaleFactor
+          ),
+          child: child!,
+        );
+      },
+    );
+  }
+}
+
+// ✅ Enhanced AppTheme class
 class AppTheme {
   static ThemeData get lightTheme {
     return ThemeData(
@@ -68,6 +106,12 @@ class AppTheme {
       ),
       drawerTheme: const DrawerThemeData(
         elevation: 0,
+      ),
+      listTileTheme: ListTileThemeData(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       ),
     );
   }
@@ -106,33 +150,12 @@ class AppTheme {
       drawerTheme: const DrawerThemeData(
         elevation: 0,
       ),
-    );
-  }
-}
-class SundayLyricsApp extends ConsumerWidget {
-  const SundayLyricsApp({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final router = ref.watch(goRouterProvider);
-    
-    return MaterialApp.router(
-      title: 'Dayasagar Praise & Worship',
-      debugShowCheckedModeBanner: false,
-      
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system, 
-      routerConfig: router,
-      
-      builder: (context, child) {
-        return MediaQuery(
-          data: MediaQuery.of(context).copyWith(
-            textScaler: const TextScaler.linear(1.0), // Prevent text scaling issues
-          ),
-          child: child!,
-        );
-      },
+      listTileTheme: ListTileThemeData(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      ),
     );
   }
 }

@@ -4,8 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:dayasagar_praise_worship/models/pagination_state.dart';
-import '../providers/bible_provider.dart';
 
 final Map<String, String> chapterTranslations = {
   'hindi': 'अध्याय',
@@ -45,7 +43,7 @@ bool _isOdiaLocal(String language) {
   return lang.startsWith('or') || lang.startsWith('od');
 }
 
-bool _isLocal(String language) =>
+bool _isLocalLanguage(String language) =>
     _isEnglishLocal(language) ||
     _isHindiLocal(language) ||
     _isOdiaLocal(language);
@@ -101,7 +99,7 @@ Future<List<int>> _loadChaptersFromBundledJson({
     if (_isHindiLocal(language)) {
       code = 'HI-Hindi';
     } else if (_isOdiaLocal(language)) {
-      code = 'OD-Odia';  // Fixed: Changed from OR-Oriya to OD-Odia
+      code = 'OD-Odia';
     } else {
       throw Exception('Unsupported language: $language');
     }
@@ -156,8 +154,9 @@ class _BibleChapterListScreenState extends ConsumerState<BibleChapterListScreen>
   final _scrollController = ScrollController();
   
   List<int> _filteredChapters = [];
-  List<int> _localChapters = [];
-  bool _isLoadingLocal = false;
+  List<int> _allChapters = [];
+  bool _isLoading = false;
+  String? _error;
   
   @override
   void initState() {
@@ -167,7 +166,6 @@ class _BibleChapterListScreenState extends ConsumerState<BibleChapterListScreen>
         _filterChapters(_searchController.text);
       }
     });
-    _scrollController.addListener(_onScroll);
     _loadChaptersData();
   }
   
@@ -179,59 +177,51 @@ class _BibleChapterListScreenState extends ConsumerState<BibleChapterListScreen>
     super.dispose();
   }
   
+  // ✅ SIMPLIFIED: Only load from local assets (no online functionality)
   Future<void> _loadChaptersData() async {
-    if (_isLocal(widget.language)) {
-      setState(() => _isLoadingLocal = true);
+    if (!_isLocalLanguage(widget.language)) {
+      setState(() {
+        _error = 'Language ${widget.language} is not available offline';
+        _isLoading = false;
+      });
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    
+    try {
+      final chapters = _isEnglishLocal(widget.language)
+          ? await _loadEnglishChaptersFromAsset(bookName: widget.bookName)
+          : await _loadChaptersFromBundledJson(
+              language: widget.language,
+              bookName: widget.bookName,
+            );
       
-      try {
-        final chapters = _isEnglishLocal(widget.language)
-            ? await _loadEnglishChaptersFromAsset(bookName: widget.bookName)
-            : await _loadChaptersFromBundledJson(
-                language: widget.language,
-                bookName: widget.bookName,
-              );
-        
-        if (mounted) {
-          setState(() {
-            _localChapters = chapters;
-            _isLoadingLocal = false;
-          });
-        }
-      } catch (e) {
-        debugPrint('Error loading local chapters: $e');
-        if (mounted) {
-          setState(() => _isLoadingLocal = false);
-        }
+      if (mounted) {
+        setState(() {
+          _allChapters = chapters;
+          _isLoading = false;
+          _error = null;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading local chapters: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _error = 'Failed to load chapters: $e';
+        });
       }
     }
   }
   
+  // ✅ SIMPLIFIED: Only refresh local data
   Future<void> _handleRefresh() async {
     HapticFeedback.lightImpact();
-    
-    if (_isLocal(widget.language)) {
-      await _loadChaptersData();
-    } else {
-      if (mounted) {
-        final chaptersParams = ChapterParams(
-          language: widget.language,
-          bookName: widget.bookName,
-        );
-        await ref.read(bibleChaptersProvider(chaptersParams).notifier).refresh();
-      }
-    }
-  }
-  
-  void _onScroll() {
-    if (!_isLocal(widget.language)) {
-      if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
-        final chaptersParams = ChapterParams(
-          language: widget.language,
-          bookName: widget.bookName,
-        );
-        ref.read(bibleChaptersProvider(chaptersParams).notifier).loadNextPage();
-      }
-    }
+    await _loadChaptersData();
   }
   
   void _toggleSearch() {
@@ -259,41 +249,11 @@ class _BibleChapterListScreenState extends ConsumerState<BibleChapterListScreen>
       if (query.isEmpty) {
         _filteredChapters.clear();
       } else {
-        List<int> sourceChapters;
-        
-        if (_isLocal(widget.language)) {
-          sourceChapters = _localChapters;
-        } else {
-          final chaptersState = _getChaptersFromProvider();
-          if (chaptersState.isLoading || chaptersState.error != null) {
-            _filteredChapters.clear();
-            return;
-          }
-          sourceChapters = chaptersState.items;
-        }
-        _filteredChapters = sourceChapters.where(
+        _filteredChapters = _allChapters.where(
           (chapter) => chapter.toString().contains(query),
         ).toList();
       }
     });
-  }
-  
-  PaginationState<int> _getChaptersFromProvider() {
-    if (_isLocal(widget.language)) {
-      return PaginationState<int>(
-        items: _localChapters,
-        isLoading: _isLoadingLocal,
-        hasMore: false,
-        isFromCache: false,
-        error: null,
-      );
-    } else {
-      final chaptersParams = ChapterParams(
-        language: widget.language,
-        bookName: widget.bookName,
-      );
-      return ref.watch(bibleChaptersProvider(chaptersParams));
-    }
   }
   
   Widget _buildBackgroundShapes() {
@@ -360,7 +320,6 @@ class _BibleChapterListScreenState extends ConsumerState<BibleChapterListScreen>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final chaptersState = _getChaptersFromProvider();
     
     return PopScope(
       canPop: !_isSearching,
@@ -415,7 +374,7 @@ class _BibleChapterListScreenState extends ConsumerState<BibleChapterListScreen>
                 Expanded(
                   child: _isSearching
                       ? _buildSearchResults(theme, isDark)
-                      : _buildChapterContent(chaptersState, theme, isDark),
+                      : _buildChapterContent(theme, isDark),
                 ),
               ],
             ),
@@ -526,7 +485,7 @@ class _BibleChapterListScreenState extends ConsumerState<BibleChapterListScreen>
       child: Column(
         children: [
           Text(
-            '',
+            'OFFLINE BIBLE',
             textAlign: TextAlign.center,
             style: GoogleFonts.inter(
               fontSize: 16,
@@ -561,17 +520,18 @@ class _BibleChapterListScreenState extends ConsumerState<BibleChapterListScreen>
     );
   }
   
-  Widget _buildChapterContent(PaginationState<int> chaptersState, ThemeData theme, bool isDark) {
-    if (chaptersState.isLoading && chaptersState.items.isEmpty) {
+  // ✅ SIMPLIFIED: Only handle local data states
+  Widget _buildChapterContent(ThemeData theme, bool isDark) {
+    if (_isLoading) {
       return _buildLoadingState(theme, isDark);
     }
-    if (chaptersState.error != null) {
-      return _buildErrorState(chaptersState.error!, theme, isDark);
+    if (_error != null) {
+      return _buildErrorState(_error!, theme, isDark);
     }
-    if (chaptersState.items.isEmpty) {
+    if (_allChapters.isEmpty) {
       return _buildEmptyState(theme, isDark);
     }
-    return _buildChaptersList(chaptersState.items, theme, isDark);
+    return _buildChaptersList(_allChapters, theme, isDark);
   }
   
   Widget _buildSearchResults(ThemeData theme, bool isDark) {
@@ -758,7 +718,7 @@ class _BibleChapterListScreenState extends ConsumerState<BibleChapterListScreen>
     );
   }
   
-  Widget _buildErrorState(Object error, ThemeData theme, bool isDark) {
+  Widget _buildErrorState(String error, ThemeData theme, bool isDark) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -776,6 +736,15 @@ class _BibleChapterListScreenState extends ConsumerState<BibleChapterListScreen>
               fontSize: 18,
               fontWeight: FontWeight.w600,
               color: (isDark ? Colors.white : const Color(0xFF1F2937)).withValues(alpha: 0.7),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            error,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              color: (isDark ? Colors.white : const Color(0xFF1F2937)).withValues(alpha: 0.6),
             ),
           ),
           const SizedBox(height: 24),

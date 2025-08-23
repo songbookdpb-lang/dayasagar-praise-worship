@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../features/songs/song_list_provider.dart';
 import '../../models/song_models.dart';
+import 'song_list_provider.dart'; 
 
 bool _isEnglishLocal(String language) {
   final lang = language.trim().toLowerCase();
@@ -42,6 +42,7 @@ class SongLyricsScreen extends ConsumerStatefulWidget {
   @override
   ConsumerState<SongLyricsScreen> createState() => _SongLyricsScreenState();
 }
+
 class _SongLyricsScreenState extends ConsumerState<SongLyricsScreen> {
   bool _isSearching = false;
   final _searchController = TextEditingController();
@@ -97,21 +98,14 @@ class _SongLyricsScreenState extends ConsumerState<SongLyricsScreen> {
     if (_fontSize > 14.0) setState(() => _fontSize -= 2.0);
   }
 
-  Song? _findSong() {
-    for (String language in ['English', 'Hindi', 'Odia', 'Sardari']) {
-      final songsState = ref.watch(songsPaginationProvider(language));
-      final song = songsState.songs.where((s) => s.id == widget.songId).firstOrNull;
-      if (song != null) return song;
-    }
-    return null;
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final bgColor = isDark ? const Color(0xFF23232B) : const Color(0xFFFAF3E7);
-    final song = _findSong();
+
+    // ✅ Use Riverpod provider instead of manual cache calls
+    final songAsync = ref.watch(songByIdProvider(widget.songId));
 
     return PopScope(
       canPop: !_isSearching,
@@ -122,8 +116,7 @@ class _SongLyricsScreenState extends ConsumerState<SongLyricsScreen> {
         color: bgColor,
         child: Theme(
           data: Theme.of(context).copyWith(
-            textTheme:
-                Theme.of(context).textTheme.apply(fontFamily: 'Merriweather'),
+            textTheme: Theme.of(context).textTheme.apply(fontFamily: 'Merriweather'),
             textButtonTheme: TextButtonThemeData(
               style: TextButton.styleFrom(
                 textStyle: const TextStyle(decoration: TextDecoration.none),
@@ -150,24 +143,152 @@ class _SongLyricsScreenState extends ConsumerState<SongLyricsScreen> {
             highlightColor: Colors.transparent,
           ),
           child: SafeArea(
-            child: _buildScrollableContent(song, isDark),
+            child: songAsync.when(
+              data: (song) {
+                if (song == null) {
+                  return _buildNotFoundState(isDark);
+                }
+                return _buildScrollableContent(song, isDark);
+              },
+              loading: () => _buildLoadingState(isDark),
+              error: (error, stack) => _buildErrorState(error.toString(), isDark),
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildScrollableContent(Song? song, bool isDark) {
-    if (song == null) {
-      return _buildNotFoundState(isDark);
-    }
+  Widget _buildLoadingState(bool isDark) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(40),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(
+              color: isDark ? Colors.amber[300] : Colors.brown,
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Loading song from cache...',
+              style: TextStyle(
+                fontFamily: 'Merriweather',
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: isDark ? Colors.white : const Color(0xFF2B1810),
+                decoration: TextDecoration.none,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
+  Widget _buildErrorState(String error, bool isDark) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(40),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.error_outline,
+              size: 64,
+              color: isDark ? Colors.red[300] : Colors.red,
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Error loading song',
+              style: TextStyle(
+                fontFamily: 'Merriweather',
+                fontWeight: FontWeight.bold,
+                fontSize: 20,
+                color: isDark ? Colors.white : const Color(0xFF2B1810),
+                decoration: TextDecoration.none,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              error,
+              style: TextStyle(
+                fontFamily: 'Merriweather',
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+                color: isDark ? Colors.white70 : const Color(0xFF6D5742),
+                decoration: TextDecoration.none,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 32),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    HapticFeedback.mediumImpact();
+                    // ✅ Refresh using Riverpod invalidation
+                    ref.invalidate(songByIdProvider(widget.songId));
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.amber[300] : Colors.brown,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Text(
+                      'Retry',
+                      style: TextStyle(
+                        fontFamily: 'Merriweather',
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        color: Colors.white,
+                        decoration: TextDecoration.none,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                GestureDetector(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    context.pop();
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: isDark ? Colors.white54 : const Color(0xFF6D5742),
+                      ),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      'Go Back',
+                      style: TextStyle(
+                        fontFamily: 'Merriweather',
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        color: isDark ? Colors.white70 : const Color(0xFF6D5742),
+                        decoration: TextDecoration.none,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildScrollableContent(Song song, bool isDark) {
     return RefreshIndicator(
       onRefresh: () async {
         HapticFeedback.lightImpact();
-        if (mounted) {
-          setState(() {});
-        }
+        // ✅ Refresh using Riverpod invalidation
+        ref.invalidate(songByIdProvider(widget.songId));
       },
       color: isDark ? Colors.amber[300] : Colors.brown,
       child: CustomScrollView(
@@ -189,9 +310,7 @@ class _SongLyricsScreenState extends ConsumerState<SongLyricsScreen> {
   }
 
   Widget _buildScrollableHeader(Song song, bool isDark) {
-    String subtitle = _isLocal(song.language) 
-        ? 'offline • ${song.language}'
-        : 'online • ${song.language}';
+    String subtitle = 'offline cache • ${song.language}';
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
@@ -217,25 +336,24 @@ class _SongLyricsScreenState extends ConsumerState<SongLyricsScreen> {
                 ),
               ),
               const Spacer(),
-              if (_isLocal(song.language))
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.green.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Text(
-                    'OFFLINE',
-                    style: TextStyle(
-                      fontFamily: 'Merriweather',
-                      fontWeight: FontWeight.bold,
-                      fontSize: 10,
-                      color: Colors.green,
-                      decoration: TextDecoration.none,
-                    ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.green.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Text(
+                  'OFFLINE',
+                  style: TextStyle(
+                    fontFamily: 'Merriweather',
+                    fontWeight: FontWeight.bold,
+                    fontSize: 10,
+                    color: Colors.green,
+                    decoration: TextDecoration.none,
                   ),
                 ),
-              if (_isLocal(song.language)) const SizedBox(width: 12),
+              ),
+              const SizedBox(width: 12),
               GestureDetector(
                 onTap: _toggleSearch,
                 child: Text(
@@ -253,7 +371,8 @@ class _SongLyricsScreenState extends ConsumerState<SongLyricsScreen> {
               GestureDetector(
                 onTap: () {
                   HapticFeedback.selectionClick();
-                  setState(() {});
+                  // ✅ Refresh using Riverpod invalidation
+                  ref.invalidate(songByIdProvider(widget.songId));
                 },
                 child: Text(
                   'Refresh',
@@ -553,7 +672,7 @@ class _SongLyricsScreenState extends ConsumerState<SongLyricsScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              'The requested song could not be found',
+              'The requested song could not be found in offline cache',
               style: TextStyle(
                 fontFamily: 'Merriweather',
                 fontWeight: FontWeight.bold,

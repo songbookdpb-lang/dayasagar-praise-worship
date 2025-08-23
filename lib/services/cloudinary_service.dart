@@ -20,7 +20,6 @@ class CloudinaryService {
       final request = http.MultipartRequest('POST', url);
       print('📤 Created POST request');
       
-      // Check if file exists before upload
       if (!await imageFile.exists()) {
         throw Exception('File does not exist: ${imageFile.path}');
       }
@@ -28,7 +27,6 @@ class CloudinaryService {
       final fileSize = await imageFile.length();
       print('📊 File size: $fileSize bytes');
       
-      // Add the file
       print('📎 Adding file to request...');
       request.files.add(await http.MultipartFile.fromPath(
         'file',
@@ -37,7 +35,6 @@ class CloudinaryService {
       ));
       print('✅ File added to request');
       
-      // Use unsigned upload preset
       request.fields['upload_preset'] = 'donate_qr_uploads';
       request.fields['folder'] = 'donate_qr_codes';
       
@@ -80,7 +77,6 @@ class CloudinaryService {
         print('❌ Upload failed with status: ${response.statusCode}');
         print('❌ Response body: $responseString');
         
-        // Try to parse error details
         try {
           final errorData = json.decode(responseString);
           print('❌ Error details:');
@@ -100,7 +96,7 @@ class CloudinaryService {
       print('❌ Error message: $e');
       print('📚 Stack trace: $stackTrace');
       
-      rethrow; // Re-throw to let the calling method handle it
+      rethrow; 
     }
   }
 }

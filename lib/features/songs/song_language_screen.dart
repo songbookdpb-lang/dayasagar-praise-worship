@@ -1,11 +1,25 @@
-// lib/features/songs/song_language_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../models/song_models.dart';
+import '../../services/incremental_sync_service.dart';
 
-import '../home/home_provider.dart';
+final globalSongSearchProvider = StateProvider<String>((ref) => '');
+
+// ✅ FIXED: Proper search implementation
+final globalSongSearchResultsProvider = FutureProvider<List<Song>>((ref) async {
+  final query = ref.watch(globalSongSearchProvider);
+  if (query.trim().isEmpty) return [];
+  
+  try {
+    final syncService = ref.read(incrementalSyncServiceProvider);
+    return await syncService.searchCachedSongs(query.trim());
+  } catch (e) {
+    return [];
+  }
+});
 
 class SongLanguageScreen extends ConsumerStatefulWidget {
   const SongLanguageScreen({super.key});
@@ -19,23 +33,22 @@ class _SongLanguageScreenState extends ConsumerState<SongLanguageScreen> {
   final _searchController = TextEditingController();
   final _searchFocusNode = FocusNode();
 
-  // Language list with English and regional names
   final List<Map<String, String>> _songLanguages = [
     {
       'name': 'English',
-      'regional': '',
+      'display': 'English',
     },
     {
       'name': 'Hindi', 
-      'regional': 'हिंदी',
+      'display': 'हिन्दी',
     },
     {
       'name': 'Odia',
-      'regional': 'ଓଡ଼ିଆ',
+      'display': 'ଓଡିଆ',
     },
     {
-      'name': 'Sadri',
-      'regional': 'सादरी',
+      'name': 'Sardari',
+      'display': 'सरदारी',
     },
   ];
 
@@ -70,67 +83,6 @@ class _SongLanguageScreenState extends ConsumerState<SongLanguageScreen> {
     });
   }
 
-  Widget _buildBackgroundShapes() {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    
-    return Stack(
-      children: [
-        Positioned(
-          top: 80,
-          right: -50,
-          child: Opacity(
-            opacity: isDark ? 0.08 : 0.04,
-            child: Container(
-              width: 150,
-              height: 150,
-              decoration: BoxDecoration(
-                color: theme.colorScheme.secondary,
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(75),
-                  topLeft: Radius.circular(75),
-                ),
-              ),
-            ),
-          ),
-        ),
-        Positioned(
-          top: 200,
-          left: -80,
-          child: Opacity(
-            opacity: isDark ? 0.06 : 0.03,
-            child: Container(
-              width: 200,
-              height: 200,
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary,
-                borderRadius: const BorderRadius.only(
-                  topRight: Radius.circular(100),
-                  bottomRight: Radius.circular(100),
-                ),
-              ),
-            ),
-          ),
-        ),
-        Positioned(
-          bottom: 100,
-          right: -60,
-          child: Opacity(
-            opacity: isDark ? 0.05 : 0.025,
-            child: Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                color: theme.colorScheme.tertiary,
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -145,10 +97,40 @@ class _SongLanguageScreenState extends ConsumerState<SongLanguageScreen> {
       },
       child: Scaffold(
         backgroundColor: theme.colorScheme.surface,
-        appBar: _buildAppBar(theme, isDark),
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          centerTitle: true,
+          systemOverlayStyle: SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+            statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+          ),
+          iconTheme: IconThemeData(
+            color: isDark ? Colors.white : const Color(0xFF1F2937),
+          ),
+          title: Text(
+            'Worship Songs',
+            style: GoogleFonts.inter(
+              fontWeight: FontWeight.w600,
+              color: isDark ? Colors.white : const Color(0xFF1F2937),
+            ),
+          ),
+          actions: [
+            Center(
+              child: IconButton(
+                icon: Icon(
+                  _isSearching ? Icons.close : Icons.search,
+                  color: isDark ? Colors.white : const Color(0xFF1F2937),
+                  size: 24,
+                ),
+                onPressed: _toggleSearch,
+              ),
+            ),
+          ],
+        ),
         body: Stack(
           children: [
-            // Same gradient background as image
             Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -168,24 +150,22 @@ class _SongLanguageScreenState extends ConsumerState<SongLanguageScreen> {
                 ),
               ),
             ),
-            // Same background cross image
+            
             Positioned.fill(
               child: Opacity(
                 opacity: isDark ? 0.12 : 0.06,
                 child: Image.asset(
                   'assets/images/cross_light.jpg',
                   fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Icon(
-                      Icons.church,
-                      size: 100,
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.1),
-                    );
-                  },
+                  errorBuilder: (context, error, stackTrace) => Icon(
+                    Icons.church,
+                    size: 100,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.1),
+                  ),
                 ),
               ),
             ),
-            _buildBackgroundShapes(),
+
             Column(
               children: [
                 if (_isSearching) _buildSearchBar(theme, isDark),
@@ -201,48 +181,20 @@ class _SongLanguageScreenState extends ConsumerState<SongLanguageScreen> {
     );
   }
 
-  AppBar _buildAppBar(ThemeData theme, bool isDark) {
-    return AppBar(
-      backgroundColor: Colors.transparent,
-      elevation: 0,
-      systemOverlayStyle: SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
-        statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
-      ),
-      iconTheme: IconThemeData(
-        color: isDark ? Colors.white : const Color(0xFF1F2937),
-      ),
-      actions: [
-        IconButton(
-          icon: Icon(
-            _isSearching ? Icons.close : Icons.search,
-            color: isDark ? Colors.white : const Color(0xFF1F2937),
-            size: 24,
-          ),
-          onPressed: () {
-            HapticFeedback.lightImpact();
-            _toggleSearch();
-          },
-          tooltip: _isSearching ? 'Close search' : 'Search songs',
-        ),
-      ],
-    );
-  }
-
   Widget _buildSearchBar(ThemeData theme, bool isDark) {
     return Container(
       padding: const EdgeInsets.all(16),
       child: TextField(
         controller: _searchController,
         focusNode: _searchFocusNode,
+        textAlign: TextAlign.center,
         style: GoogleFonts.inter(
           fontSize: 16,
           color: isDark ? Colors.white : const Color(0xFF1F2937),
           fontWeight: FontWeight.w500,
         ),
         decoration: InputDecoration(
-          hintText: 'Search songs across all languages...',
+          hintText: 'Search songs in all languages',
           hintStyle: GoogleFonts.inter(
             color: (isDark ? Colors.white : const Color(0xFF1F2937)).withValues(alpha: 0.6),
             fontWeight: FontWeight.w500,
@@ -260,7 +212,6 @@ class _SongLanguageScreenState extends ConsumerState<SongLanguageScreen> {
                     size: 20,
                   ),
                   onPressed: () {
-                    HapticFeedback.lightImpact();
                     _searchController.clear();
                     ref.read(globalSongSearchProvider.notifier).state = '';
                   },
@@ -290,44 +241,30 @@ class _SongLanguageScreenState extends ConsumerState<SongLanguageScreen> {
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         ),
         onSubmitted: (value) {
-          HapticFeedback.selectionClick();
           ref.read(globalSongSearchProvider.notifier).state = value;
         },
         textInputAction: TextInputAction.search,
       ),
     );
   }
+
   Widget _buildHeader(ThemeData theme, bool isDark) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
-      child: Column(
-        children: [
-          Text(
-            '',
-            textAlign: TextAlign.center,
-            style: GoogleFonts.inter(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-              color: (isDark ? Colors.white : const Color(0xFF1F2937)).withValues(alpha: 0.7),
-              letterSpacing: 2,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Worship Songs',
-            textAlign: TextAlign.center,
-            style: GoogleFonts.inter(
-              fontSize: 32,
-              fontWeight: FontWeight.w700,
-              color: isDark ? Colors.white : const Color(0xFF1F2937),
-              height: 1.2,
-            ),
-          ),
-        ],
+      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 8),
+      child: Text(
+        'Worship Songs',
+        textAlign: TextAlign.center,
+        style: GoogleFonts.inter(
+          fontSize: 32,
+          fontWeight: FontWeight.w700,
+          color: isDark ? Colors.white : const Color(0xFF1F2937),
+          height: 1.2,
+        ),
       ),
     );
   }
 
+  // ✅ FIXED: Not perfectly centered - uses moderate spacing from top
   Widget _buildLanguageList() {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
@@ -335,60 +272,47 @@ class _SongLanguageScreenState extends ConsumerState<SongLanguageScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 32),
       child: Column(
-        children: _songLanguages.map((language) {
-          return Container(
-            width: double.infinity,
-            margin: const EdgeInsets.only(bottom: 16),
-            decoration: BoxDecoration(
-              color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.1),
-                width: 1,
-              ),
-            ),
-            child: Material(
-              color: Colors.transparent,
-              borderRadius: BorderRadius.circular(16),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(16),
-                onTap: () {
-                  HapticFeedback.selectionClick();
+        children: [
+          const SizedBox(height: 40), // Moderate distance from header
+          ..._songLanguages.map((language) {
+            return Container(
+              width: double.infinity,
+              margin: const EdgeInsets.only(bottom: 16),
+              child: ElevatedButton(
+                onPressed: () {
+                  print('Navigating to: /songs/${language['name']}');
                   context.push('/songs/${language['name']}');
                 },
-                child: Padding(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.1),
+                  foregroundColor: isDark ? Colors.white : const Color(0xFF1F2937),
+                  elevation: 0,
+                  shadowColor: Colors.transparent,
                   padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Text(
-                        language['name']!,
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.inter(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: isDark ? Colors.white : const Color(0xFF1F2937),
-                        ),
-                      ),
-                      if (language['regional']!.isNotEmpty) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          language['regional']!,
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.inter(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: (isDark ? Colors.white : const Color(0xFF1F2937)).withValues(alpha: 0.7),
-                          ),
-                        ),
-                      ],
-                    ],
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    side: BorderSide(
+                      color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.1),
+                      width: 1,
+                    ),
+                  ),
+                  alignment: Alignment.center,
+                ),
+                child: Text(
+                  language['display']!,
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white : const Color(0xFF1F2937),
+                    letterSpacing: 0.5,
                   ),
                 ),
               ),
-            ),
-          );
-        }).toList(),
+            );
+          }).toList(),
+          const Spacer(), // Pushes content to natural position, not centered
+        ],
       ),
     );
   }
@@ -412,21 +336,12 @@ class _SongLanguageScreenState extends ConsumerState<SongLanguageScreen> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Search across all song languages',
+                  'Search in all languages',
                   textAlign: TextAlign.center,
                   style: GoogleFonts.inter(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
                     color: (isDark ? Colors.white : const Color(0xFF1F2937)).withValues(alpha: 0.7),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Type to find songs in Hindi, English, Odia, or Sadri',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    color: (isDark ? Colors.white : const Color(0xFF1F2937)).withValues(alpha: 0.6),
                   ),
                 ),
               ],
@@ -454,15 +369,6 @@ class _SongLanguageScreenState extends ConsumerState<SongLanguageScreen> {
                     color: (isDark ? Colors.white : const Color(0xFF1F2937)).withValues(alpha: 0.7),
                   ),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  'Try different keywords or check spelling',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    color: (isDark ? Colors.white : const Color(0xFF1F2937)).withValues(alpha: 0.6),
-                  ),
-                ),
               ],
             ),
           );
@@ -474,121 +380,56 @@ class _SongLanguageScreenState extends ConsumerState<SongLanguageScreen> {
             itemCount: songs.length,
             itemBuilder: (context, index) {
               final song = songs[index];
-              return _buildSearchResultCard(song, theme, isDark);
+              return Container(
+                width: double.infinity,
+                margin: const EdgeInsets.only(bottom: 12),
+                child: ElevatedButton(
+                  onPressed: () {
+                    context.push('/song/${song.id}');
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.1),
+                    foregroundColor: isDark ? Colors.white : const Color(0xFF1F2937),
+                    elevation: 0,
+                    shadowColor: Colors.transparent,
+                    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      side: BorderSide(
+                        color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.1),
+                        width: 1,
+                      ),
+                    ),
+                    alignment: Alignment.center,
+                  ),
+                  child: Text(
+                    song.songName,
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? Colors.white : const Color(0xFF1F2937),
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              );
             },
           ),
         );
       },
       loading: () => Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircularProgressIndicator(color: theme.colorScheme.primary),
-            const SizedBox(height: 16),
-            Text(
-              'Searching songs...',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.inter(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: (isDark ? Colors.white : const Color(0xFF1F2937)).withValues(alpha: 0.7),
-              ),
-            ),
-          ],
-        ),
+        child: CircularProgressIndicator(color: theme.colorScheme.primary),
       ),
       error: (err, stack) => Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.error_outline, size: 64, color: theme.colorScheme.error),
-            const SizedBox(height: 16),
-            Text(
-              'Search Error',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.inter(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: (isDark ? Colors.white : const Color(0xFF1F2937)).withValues(alpha: 0.7),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Please try again',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.inter(
-                fontSize: 14,
-                color: (isDark ? Colors.white : const Color(0xFF1F2937)).withValues(alpha: 0.6),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSearchResultCard(song, ThemeData theme, bool isDark) {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.1),
-          width: 1,
-        ),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: () {
-            HapticFeedback.selectionClick();
-            context.push('/song/${song.id}');
-          },
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-            child: Column(
-              children: [
-                Text(
-                  song.songName,
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.white : const Color(0xFF1F2937),
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                if (song.lyrics.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    song.lyrics,
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: (isDark ? Colors.white : const Color(0xFF1F2937)).withValues(alpha: 0.7),
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 4),
-                Text(
-                  'Song • ${song.language}',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: theme.colorScheme.primary,
-                  ),
-                ),
-              ],
-            ),
+        child: Text(
+          'Search error',
+          textAlign: TextAlign.center,
+          style: GoogleFonts.inter(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: theme.colorScheme.error,
           ),
         ),
       ),

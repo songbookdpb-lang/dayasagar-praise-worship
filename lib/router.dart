@@ -56,14 +56,15 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/song_languages',
         name: 'song_languages',
-        builder: (context, state) => const SongLanguageScreen(),
+        builder: (context, state) => const SongLanguageScreen(), // ← SINGULAR
       ),
+
       GoRoute(
         path: '/songs/:language',
         name: 'songs_by_language',
         builder: (context, state) {
           final language = state.pathParameters['language']!;
-          print('Songs route - Language: $language'); // Debug print
+          print('Songs route - Language: $language');
           return song_features.SongListScreen(language: language);
         },
       ),
@@ -110,7 +111,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         name: 'song_detail',
         builder: (context, state) {
           final songId = state.pathParameters['songId']!;
-          print('Song detail route - SongId: $songId'); // Debug print
+          print('Song detail route - SongId: $songId');
           return song_screens.SongLyricsScreen(songId: songId);
         },
       ),
@@ -139,8 +140,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
     ],
 
-    errorBuilder: (context, state) =>
-        _ErrorScreen(location: state.uri.toString()),
+    errorBuilder: (context, state) => _ErrorScreen(
+      location: state.uri.toString(),
+      error: state.error,
+    ),
   );
 });
 
@@ -265,8 +268,9 @@ class _PlaceholderScreen extends StatelessWidget {
 
 class _ErrorScreen extends StatelessWidget {
   final String location;
+  final Exception? error;
 
-  const _ErrorScreen({required this.location});
+  const _ErrorScreen({required this.location, this.error});
 
   @override
   Widget build(BuildContext context) {
@@ -278,6 +282,9 @@ class _ErrorScreen extends StatelessWidget {
         title: const Text('Page Not Found'),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        iconTheme: IconThemeData(
+          color: isDark ? Colors.white : const Color(0xFF1F2937),
+        ),
       ),
       body: Stack(
         children: [
@@ -306,10 +313,21 @@ class _ErrorScreen extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    Icons.error_outline,
-                    size: 80,
-                    color: theme.colorScheme.error,
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.error.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: theme.colorScheme.error.withValues(alpha: 0.3),
+                        width: 2,
+                      ),
+                    ),
+                    child: Icon(
+                      Icons.error_outline,
+                      size: 80,
+                      color: theme.colorScheme.error,
+                    ),
                   ),
                   const SizedBox(height: 24),
                   Text(
@@ -322,31 +340,75 @@ class _ErrorScreen extends StatelessWidget {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 16),
-                  Text(
-                    'The page "$location" does not exist.',
-                    style: GoogleFonts.inter(
-                      fontSize: 16,
-                      color: (isDark ? Colors.white : const Color(0xFF1F2937))
-                          .withValues(alpha: 0.7),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: (isDark ? Colors.white : Colors.black).withValues(
+                        alpha: 0.1,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    textAlign: TextAlign.center,
+                    child: Column(
+                      children: [
+                        Text(
+                          'The page "$location" does not exist.',
+                          style: GoogleFonts.inter(
+                            fontSize: 16,
+                            color: (isDark ? Colors.white : const Color(0xFF1F2937))
+                                .withValues(alpha: 0.7),
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        if (error != null) ...[
+                          const SizedBox(height: 8),
+                          Text(
+                            'Error: ${error.toString()}',
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              color: theme.colorScheme.error.withValues(alpha: 0.8),
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 32),
-                  ElevatedButton.icon(
-                    onPressed: () => context.go('/'),
-                    icon: const Icon(Icons.home),
-                    label: const Text('Go Home'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: theme.colorScheme.primary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 16,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ElevatedButton.icon(
+                        onPressed: () => context.go('/'),
+                        icon: const Icon(Icons.home),
+                        label: const Text('Go Home'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: theme.colorScheme.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 16,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
                       ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                      const SizedBox(width: 16),
+                      OutlinedButton.icon(
+                        onPressed: () => context.go('/song_languages'),
+                        icon: const Icon(Icons.music_note),
+                        label: const Text('Songs'),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 16,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
                 ],
               ),

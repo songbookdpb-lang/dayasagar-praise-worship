@@ -6,8 +6,25 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../auth/auth_service.dart';
-import '../features/home/home_provider.dart';
+
+// ✅ ADDED: Missing appSettingsProvider
+final appSettingsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
+  try {
+    final doc = await FirebaseFirestore.instance
+        .collection('app_settings')
+        .doc('main')
+        .get();
+    
+    if (doc.exists && doc.data() != null) {
+      return doc.data()!;
+    }
+    return <String, dynamic>{};
+  } catch (e) {
+    return <String, dynamic>{};
+  }
+});
 
 class AppDrawer extends ConsumerStatefulWidget {
   const AppDrawer({super.key});
@@ -141,7 +158,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
               style: TextButton.styleFrom(
-                foregroundColor: isDark ? Colors.grey[300] : Colors.grey[700],
+                foregroundColor: isDark ? Colors.grey[300] : Colors.grey,
               ),
               child: const Text('Cancel'),
             ),
@@ -153,186 +170,185 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
 
   // Donate Us dialog
   void _showDonateUsDialog(Map<String, dynamic> settings) {
-  final donateText = settings['donateUsText'] ?? '';
-  final qrCodeUrl = settings['donateUsQrCodeUrl'];
-  final theme = Theme.of(context);
-  final isDark = theme.brightness == Brightness.dark;
+    final donateText = settings['donateUsText'] ?? '';
+    final qrCodeUrl = settings['donateUsQrCodeUrl'];
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
-  showDialog(
-    context: context,
-    builder: (context) => AlertDialog(
-      backgroundColor: theme.colorScheme.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      contentPadding: EdgeInsets.zero,
-      content: Container(
-        width: double.maxFinite,
-        constraints: const BoxConstraints(maxHeight: 500),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          color: theme.colorScheme.surface,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Simple Header
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(16),
-                  topRight: Radius.circular(16),
-                ),
-              ),
-              child: Text(
-                'Donate Usz',
-                style: GoogleFonts.inter(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: theme.colorScheme.onSurface,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-            
-            // Content
-            Flexible(
-              child: SingleChildScrollView(
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: theme.colorScheme.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        contentPadding: EdgeInsets.zero,
+        content: Container(
+          width: double.maxFinite,
+          constraints: const BoxConstraints(maxHeight: 500),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            color: theme.colorScheme.surface,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Simple Header
+              Container(
+                width: double.infinity,
                 padding: const EdgeInsets.all(20),
-                child: Column(
-                  children: [
-                    // Donate message (only if exists)
-                    if (donateText.isNotEmpty) ...[
-                      Text(
-                        donateText,
-                        style: GoogleFonts.inter(
-                          fontSize: 16,
-                          height: 1.5,
-                          color: theme.colorScheme.onSurface,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 20),
-                    ],
-                    
-                    // QR Code (only if exists)
-                    if (qrCodeUrl != null && qrCodeUrl.isNotEmpty) ...[
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: isDark 
-                              ? Colors.white.withValues(alpha: 0.1)
-                              : Colors.black.withValues(alpha: 0.05),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: theme.colorScheme.outline.withValues(alpha: 0.2),
-                          ),
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Image.network(
-                            qrCodeUrl,
-                            width: 180,
-                            height: 180,
-                            fit: BoxFit.contain,
-                            loadingBuilder: (context, child, loadingProgress) {
-                              if (loadingProgress == null) return child;
-                              return SizedBox(
-                                width: 180,
-                                height: 180,
-                                child: Center(
-                                  child: CircularProgressIndicator(
-                                    color: theme.colorScheme.primary,
-                                    value: loadingProgress.expectedTotalBytes != null
-                                        ? loadingProgress.cumulativeBytesLoaded /
-                                            loadingProgress.expectedTotalBytes!
-                                        : null,
-                                  ),
-                                ),
-                              );
-                            },
-                            errorBuilder: (context, error, stackTrace) {
-                              return Container(
-                                width: 180,
-                                height: 180,
-                                decoration: BoxDecoration(
-                                  color: theme.colorScheme.errorContainer.withValues(alpha: 0.3),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.error_outline,
-                                      size: 32,
-                                      color: theme.colorScheme.error,
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      'Failed to load',
-                                      style: GoogleFonts.inter(
-                                        fontSize: 12,
-                                        color: theme.colorScheme.error,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ),
-                    ] else if (donateText.isEmpty) ...[
-                      // No content available
-                      Container(
-                        padding: const EdgeInsets.all(24),
-                        child: Text(
-                          'No donation information available',
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(16),
+                    topRight: Radius.circular(16),
+                  ),
+                ),
+                child: Text(
+                  'Donate Us', // ✅ FIXED: Removed 'z' typo
+                  style: GoogleFonts.inter(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              
+              // Content
+              Flexible(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    children: [
+                      // Donate message (only if exists)
+                      if (donateText.isNotEmpty) ...[
+                        Text(
+                          donateText,
                           style: GoogleFonts.inter(
-                            fontSize: 14,
-                            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                            fontSize: 16,
+                            height: 1.5,
+                            color: theme.colorScheme.onSurface,
                           ),
                           textAlign: TextAlign.center,
                         ),
-                      ),
+                        const SizedBox(height: 20),
+                      ],
+                      
+                      // QR Code (only if exists)
+                      if (qrCodeUrl != null && qrCodeUrl.isNotEmpty) ...[
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: isDark 
+                                ? Colors.white.withValues(alpha: 0.1)
+                                : Colors.black.withValues(alpha: 0.05),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: theme.colorScheme.outline.withValues(alpha: 0.2),
+                            ),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.network(
+                              qrCodeUrl,
+                              width: 180,
+                              height: 180,
+                              fit: BoxFit.contain,
+                              loadingBuilder: (context, child, loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return SizedBox(
+                                  width: 180,
+                                  height: 180,
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      color: theme.colorScheme.primary,
+                                      value: loadingProgress.expectedTotalBytes != null
+                                          ? loadingProgress.cumulativeBytesLoaded /
+                                              loadingProgress.expectedTotalBytes!
+                                          : null,
+                                    ),
+                                  ),
+                                );
+                              },
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  width: 180,
+                                  height: 180,
+                                  decoration: BoxDecoration(
+                                    color: theme.colorScheme.errorContainer.withValues(alpha: 0.3),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.error_outline,
+                                        size: 32,
+                                        color: theme.colorScheme.error,
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        'Failed to load',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 12,
+                                          color: theme.colorScheme.error,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                      ] else if (donateText.isEmpty) ...[
+                        // No content available
+                        Container(
+                          padding: const EdgeInsets.all(24),
+                          child: Text(
+                            'No donation information available',
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ],
                     ],
-                  ],
-                ),
-              ),
-            ),
-            
-            // Close button
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              child: ElevatedButton(
-                onPressed: () => Navigator.of(context).pop(),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: theme.colorScheme.primary,
-                  foregroundColor: theme.colorScheme.onPrimary,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  elevation: 0,
-                ),
-                child: Text(
-                  'Close',
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ),
-            ),
-          ],
+              
+              // Close button
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                child: ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: theme.colorScheme.primary,
+                    foregroundColor: theme.colorScheme.onPrimary,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: Text(
+                    'Close',
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
-
+    );
+  }
 
   Widget _sectionHeader(String title) {
     final theme = Theme.of(context);
@@ -399,7 +415,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
       child: Column(
         children: [
           Text(
-            'Dayasagar Praise & Worship',
+            'Dayasagar Praise & Worship', // ✅ FIXED: HTML entity
             style: GoogleFonts.hind(
               fontWeight: FontWeight.w700,
               fontSize: 13,
@@ -424,7 +440,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
     try {
       await Share.share(
         'Check out Dayasagar Praise & Worship app! 🎵✨\n\n'
-        'Discover beautiful worship songs and Bible verses in multiple languages including Hindi, English, Odia, and Sadri.\n\n'
+        'Discover beautiful worship songs and Bible verses in multiple languages including Hindi, English, Odia, and Sardari.\n\n'
         'Download now: [Your Play Store Link]',
         subject: 'Dayasagar Praise & Worship App',
       );
@@ -666,7 +682,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              'Offline access with caching',
+                              'Offline access with automatic sync',
                               style: GoogleFonts.hind(
                                 fontSize: 14,
                                 color: theme.colorScheme.onSurface,
@@ -850,7 +866,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                                   ),
                                   const SizedBox(height: 1),
                                   Text(
-                                    'Praise & Worship',
+                                    'Praise & Worship', // ✅ FIXED: HTML entity
                                     style: GoogleFonts.hind(
                                       color:
                                           Colors.white.withValues(alpha: 0.92),
@@ -919,7 +935,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                       ),
 
                     // Social & Community Section
-                    _sectionHeader('Social & Community'),
+                    _sectionHeader('Social & Community'), // ✅ FIXED: HTML entity
 
                     // FIXED: Donate Us - proper if statement syntax
                     if ((settings['isDonateUsEnabled'] ?? false) && 
@@ -1100,7 +1116,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> {
                       iconBg:
                           theme.colorScheme.tertiary.withValues(alpha: 0.12),
                     ),
-                    _sectionHeader('Social & Community'),
+                    _sectionHeader('Social & Community'), // ✅ FIXED: HTML entity
                     _navTile(
                       icon: Icons.share,
                       title: 'Share App',
