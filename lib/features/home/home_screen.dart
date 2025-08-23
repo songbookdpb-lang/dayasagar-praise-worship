@@ -2422,8 +2422,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         'Hello! I found you through the Dayasagar Praise & Worship app. ';
 
     try {
-      final Uri whatsappUrl = Uri.parse(
-          'https://wa.me/${phoneNumber.replaceAll('+', '')}?text=${Uri.encodeComponent(message)}');
+      final Uri whatsappUrl = Uri.parse(phoneNumber);
+
 
       if (await canLaunchUrl(whatsappUrl)) {
         await launchUrl(whatsappUrl, mode: LaunchMode.externalApplication);
