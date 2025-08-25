@@ -322,7 +322,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       children: [
                         Row(
                           children: [
-                            Text('$lang', style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+                            Text(lang, style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
                             const Spacer(),
                             if (needsSync)
                               Container(
@@ -351,7 +351,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ],
                     ),
                   );
-                }).toList(),
+                }),
               ],
             ),
           ),
@@ -1591,7 +1591,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
                 child: Row(
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.favorite,
                       color: Colors.red,
                       size: 24,

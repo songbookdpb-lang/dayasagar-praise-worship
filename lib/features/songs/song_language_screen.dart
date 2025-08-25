@@ -47,8 +47,12 @@ class _SongLanguageScreenState extends ConsumerState<SongLanguageScreen> {
     },
     {
       'name': 'Sardari',
-      'display': 'सरदारी',
+      'display': 'सादरी',
     },
+    {
+      'name': 'Mundari',
+      'display': 'ମୁଣ୍ଡାରୀ',
+    }
   ];
 
   @override
@@ -308,7 +312,7 @@ class _SongLanguageScreenState extends ConsumerState<SongLanguageScreen> {
                 ),
               ),
             );
-          }).toList(),
+          }),
           const Spacer(),
         ],
       ),

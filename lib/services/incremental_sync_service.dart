@@ -219,7 +219,7 @@ class IncrementalSyncService {
         status['languages'][language] = {
           'songCount': count,
           'currentBatch': batch,
-          'lastSyncTime': metadata?.lastSyncTime?.toIso8601String(),
+          'lastSyncTime': metadata?.lastSyncTime.toIso8601String(),
           'hasMoreData': metadata?.hasMoreData ?? true,
         };
         
@@ -365,7 +365,7 @@ class IncrementalSyncService {
         'language': language,
         'songCount': songs.length,
         'currentBatch': batch,
-        'lastSyncTime': metadata?.lastSyncTime?.toIso8601String(),
+        'lastSyncTime': metadata?.lastSyncTime.toIso8601String(),
         'hasMoreData': metadata?.hasMoreData ?? true,
         'activeSongs': songs.where((s) => !s.isDeleted).length,
         'deletedSongs': songs.where((s) => s.isDeleted).length,
